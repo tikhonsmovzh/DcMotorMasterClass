@@ -19,7 +19,12 @@ void loop() {
 
     velocityTick();
 
+    Serial.print("right: vel = ");
+    Serial.print(gRightW);
+    Serial.print(" pos = ");
+    Serial.print(gRightHeading);
+    Serial.print(" left: vel = ");
     Serial.print(gLeftW);
-    Serial.print(" ");
-    Serial.println(gRightW);
+    Serial.print(" pos = ");
+    Serial.println(gLeftHeading);
 }

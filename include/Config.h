@@ -1,6 +1,6 @@
 #pragma once
 
-#define Ts_us 20000
+#define Ts_us 30000
 #define Ts_s (Ts_us / 1000000.0)
 
 

@@ -35,7 +35,7 @@ void rightEncHandler(){
 
     const uint8_t rightEnc = (rightA << 1) | rightB;
 
-    _rightTicksCounter += /*_ett[rightEncOld][rightEnc]**/ RIGHT_ENC_DIR;
+    _rightTicksCounter += _ett[rightEncOld][rightEnc]* RIGHT_ENC_DIR;
 
     rightEncOld = rightEnc;
 }
