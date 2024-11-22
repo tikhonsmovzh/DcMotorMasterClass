@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "Encoder.h"
 #include "VelEstimator.h"
+#include "Odometry.h"
 
 void setup() {
   Serial.begin(9600);
@@ -16,15 +17,12 @@ void loop() {
 
     leftEncTick();
     rightEncTick();
-
+    odometryTick();
     velocityTick();
 
-    Serial.print("right: vel = ");
-    Serial.print(gRightW);
-    Serial.print(" pos = ");
-    Serial.print(gRightHeading);
-    Serial.print(" left: vel = ");
-    Serial.print(gLeftW);
-    Serial.print(" pos = ");
-    Serial.println(gLeftHeading);
+    Serial.print(gRobotState.x * 100);
+    Serial.print(" ");
+    Serial.print(gRobotState.y * 100);
+    Serial.print(" ");
+    Serial.println(gRobotState.h / PI * 180);
 }

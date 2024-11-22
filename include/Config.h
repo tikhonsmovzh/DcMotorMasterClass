@@ -17,7 +17,10 @@
 #define ENC_PPR 48
 #define GEAR_RATIO 30
 
-#define TICKS_TO_RAD  2.0 * PI / (ENC_PPR * GEAR_RATIO)
+#define TICKS_TO_RAD  (2.0 * PI / (ENC_PPR * GEAR_RATIO))
 
 
 #define LPF_ALPHA 0.5
+
+#define WHEEL_RADIUS (0.032 / 2) //32.8
+#define ROBOT_WIDTH 0.07 //0.0695
