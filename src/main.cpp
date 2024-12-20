@@ -5,6 +5,7 @@
 #include "Odometry.h"
 #include "FunctionSwitcher.h"
 #include "Voltmeter.h"
+#include "Motor.h"
 
 void setup() {
   Serial.begin(9600);
@@ -12,6 +13,10 @@ void setup() {
   encsInit();
   functionInit();
   voltInit();
+  motorInit();
+
+  gTargetLeftW = 4.0;
+  gTargetRightW = 4.0;
 }
 
 void loop() {
@@ -25,6 +30,7 @@ void loop() {
   velocityTick();
   functionTick();
   voltTick();
+  motorTick();
 
-  Serial.println(gVoltmeterVolts);
+  //Serial.println(gLeftW);
 }
