@@ -9,6 +9,6 @@ void setDriveVelocity(float forwardVel, float headingVel){
 
     const float deltaW = headingVel * HEADING_VEL_TO_DELTA_W;
 
-    gTargetLeftW = W + deltaW;
-    gTargetRightW = W - deltaW;
+    gTargetLeftW = W - deltaW;
+    gTargetRightW = W + deltaW;
 }

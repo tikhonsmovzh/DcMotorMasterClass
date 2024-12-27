@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include "Config.h"
 #include "Encoder.h"
 #include "VelEstimator.h"
 #include "Odometry.h"
@@ -7,6 +6,7 @@
 #include "Voltmeter.h"
 #include "Motor.h"
 #include "DriveTrain.h"
+#include "Runner.h"
 
 void setup() {
   Serial.begin(9600);
@@ -15,6 +15,9 @@ void setup() {
   functionInit();
   voltInit();
   motorInit();
+
+  gTragetRobotState.x = 1.0;
+  gTragetRobotState.y = 1.0;
 }
 
 void loop() {
@@ -22,13 +25,11 @@ void loop() {
   while(micros() - timer < Ts_us);
   timer = micros();
 
-  leftEncTick();
-  rightEncTick();
+  encsTick();
   odometryTick();
   velocityTick();
   functionTick();
   voltTick();
   motorTick();
-
-  setDriveVelocity(0.2f, 5.74);
+  runnerTick();
 }

@@ -2,7 +2,7 @@
 
 //timer
 #define Ts_us 30000
-#define Ts_s (Ts_us / 1000000.0)
+#define Ts_s (Ts_us / 1000000.0f)
 
 //encoders
 #define LEFT_CLK_A_PIN 2
@@ -28,7 +28,7 @@
 
 //voltmeter
 #define VOLTMETER_PIN 21
-#define BATTERY_DRIVER_RATIO 2.0
+#define BATTERY_DRIVER_RATIO 2.0f
 #define MAX_PIN_VOLTADGE 5.0f
 #define ANALOG_TO_VOLTS ((MAX_PIN_VOLTADGE * BATTERY_DRIVER_RATIO) / 1023.0)
 
@@ -47,3 +47,9 @@
 
 //drive train
 #define HEADING_VEL_TO_DELTA_W ((ROBOT_WIDTH / WHEEL_RADIUS) * 0.5f)
+
+//runner
+#define L_P 1.0
+#define L_SENS 0.01
+#define H_P 1.0
+#define H_SENS 0.2

@@ -40,26 +40,20 @@ void rightEncHandler(){
     rightEncOld = rightEnc;
 }
 
-void leftEncTick(){
+void encsTick(){
     noInterrupts();
 
+    const int rightCounterInc = _rightTicksCounter;
+    _rightTicksCounter = 0;
+    
     const int leftCounterInc = _leftTicksCounter;
     _leftTicksCounter = 0;
 
     interrupts();
 
-    gLeftHeading += leftCounterInc * TICKS_TO_RAD;
-}
-
-void rightEncTick(){
-    noInterrupts();
-
-    const int rightCounterInc = _rightTicksCounter;
-    _rightTicksCounter = 0;
-
-    interrupts();
-
     gRightHeading += rightCounterInc * TICKS_TO_RAD;
+
+    gLeftHeading += leftCounterInc * TICKS_TO_RAD;
 }
 
 void encsInit(){
