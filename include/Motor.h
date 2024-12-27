@@ -45,9 +45,7 @@ float gTargetRightW = 0.0;
 void motorTick(){
     const float currentLeftW = gLeftW;
     const float currentRightW = gRightW;
-
-    Serial.println(gTargetLeftW - currentLeftW);
-
+    
     setRightU(_rightRegulator.update(gTargetRightW - currentRightW));
     setLeftU(_leftRegulator.update(gTargetLeftW - currentLeftW));
 }

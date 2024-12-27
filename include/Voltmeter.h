@@ -6,7 +6,7 @@
 float gVoltmeterVolts = 1.0;
 
 float decodeVoltmeter(int rawVolt){
-    return rawVolt * ANALOG_TO_VOLTS;
+    return (float)rawVolt * ANALOG_TO_VOLTS;
 }
 
 void voltInit(){

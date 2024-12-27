@@ -6,6 +6,7 @@
 #include "FunctionSwitcher.h"
 #include "Voltmeter.h"
 #include "Motor.h"
+#include "DriveTrain.h"
 
 void setup() {
   Serial.begin(9600);
@@ -14,9 +15,6 @@ void setup() {
   functionInit();
   voltInit();
   motorInit();
-
-  gTargetLeftW = 4.0;
-  gTargetRightW = 4.0;
 }
 
 void loop() {
@@ -25,12 +23,12 @@ void loop() {
   timer = micros();
 
   leftEncTick();
-  rightEncTick(); 
+  rightEncTick();
   odometryTick();
   velocityTick();
   functionTick();
   voltTick();
   motorTick();
 
-  //Serial.println(gLeftW);
+  setDriveVelocity(0.2f, 5.74);
 }
