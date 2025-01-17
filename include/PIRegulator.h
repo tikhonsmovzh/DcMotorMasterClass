@@ -21,7 +21,7 @@ public:
         const float u = uP + uI;
 
         if((u < _maxU && u > -_maxU) || (err * u < 0.0f))
-            _integrall = err * Ts_s;
+            _integrall += err * Ts_s;
 
         return u;
     }

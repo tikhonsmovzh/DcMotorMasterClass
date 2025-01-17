@@ -19,7 +19,7 @@
 #define LPF_ALPHA 0.5f
 
 //odometry
-#define WHEEL_RADIUS (0.032f / 2) //32.8
+#define WHEEL_RADIUS (0.032f / 2.0f) //32.8
 #define ROBOT_WIDTH 0.07f //0.0695
 
 //functions switcher
@@ -41,15 +41,14 @@
 #define RIGHT_MOTOR_PWM_PIN 10
 
 //velocity regulators
-#define MAX_MOTOR_U 8.0f
-#define MOTOR_K_P 0.72f
-#define MOTOR_K_I 1.75f
+#define MAX_MOTOR_U 4.0f
+#define MOTOR_K_P 0.96f
+#define MOTOR_K_I 0.9f
 
 //drive train
 #define HEADING_VEL_TO_DELTA_W ((ROBOT_WIDTH / WHEEL_RADIUS) * 0.5f)
 
-//runner
-#define L_P 1.0
-#define L_SENS 0.01
-#define H_P 1.0
-#define H_SENS 0.2
+//cyclograms
+#define BUFFER_LENGHT 10
+#define FORWARD_VEL 0.05f
+#define CELL_SIZE 0.18f

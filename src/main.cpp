@@ -6,7 +6,7 @@
 #include "Voltmeter.h"
 #include "Motor.h"
 #include "DriveTrain.h"
-#include "Runner.h"
+#include "Cyclograms.h"
 
 void setup() {
   Serial.begin(9600);
@@ -15,9 +15,7 @@ void setup() {
   functionInit();
   voltInit();
   motorInit();
-
-  gTragetRobotState.x = 1.0;
-  gTragetRobotState.y = 1.0;
+  cyclogramsInit();
 }
 
 void loop() {
@@ -31,5 +29,5 @@ void loop() {
   functionTick();
   voltTick();
   motorTick();
-  runnerTick();
+  cyclogramsTick();
 }
