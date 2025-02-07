@@ -14,6 +14,5 @@ void voltInit(){
 }
 
 void voltTick(){
-    //gVoltmeterVolts = decodeVoltmeter(analogRead(VOLTMETER_PIN));
-    gVoltmeterVolts = 5.0;
+    gVoltmeterVolts = decodeVoltmeter(analogRead(VOLTMETER_PIN));
 }

@@ -29,5 +29,6 @@ void loop() {
   functionTick();
   voltTick();
   motorTick();
+
   cyclogramsTick();
-}
+} 

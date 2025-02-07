@@ -9,7 +9,7 @@
 #define LEFT_B_PIN 4
 #define RIGHT_CLK_A_PIN 3
 #define RIGHT_B_PIN 5
-#define LEFT_ENC_DIR -1
+#define LEFT_ENC_DIR -1 
 #define RIGHT_ENC_DIR 1
 #define ENC_PPR 48
 #define GEAR_RATIO 30
@@ -19,8 +19,8 @@
 #define LPF_ALPHA 0.5f
 
 //odometry
-#define WHEEL_RADIUS (0.032f / 2.0f) //32.8
-#define ROBOT_WIDTH 0.07f //0.0695
+#define WHEEL_RADIUS (0.032f / 2.0f)
+#define ROBOT_WIDTH 0.07f
 
 //functions switcher
 #define FUNCTION_PIN A6
@@ -42,8 +42,8 @@
 
 //velocity regulators
 #define MAX_MOTOR_U 4.0f
-#define MOTOR_K_P 0.96f
-#define MOTOR_K_I 0.9f
+#define MOTOR_K_P 0.561f
+#define MOTOR_K_I 1.245f
 
 //drive train
 #define HEADING_VEL_TO_DELTA_W ((ROBOT_WIDTH / WHEEL_RADIUS) * 0.5f)
