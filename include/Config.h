@@ -19,8 +19,8 @@
 #define LPF_ALPHA 0.5f
 
 //odometry
-#define WHEEL_RADIUS (0.032f / 2.0f)
-#define ROBOT_WIDTH 0.07f
+#define WHEEL_RADIUS (0.034f / 2.0f)
+#define ROBOT_WIDTH 0.08f
 
 //functions switcher
 #define FUNCTION_PIN A6
@@ -42,13 +42,13 @@
 
 //velocity regulators
 #define MAX_MOTOR_U 4.0f
-#define MOTOR_K_P 0.561f
-#define MOTOR_K_I 1.245f
+#define MOTOR_K_P 0.696f
+#define MOTOR_K_I 1.565f
 
 //drive train
 #define HEADING_VEL_TO_DELTA_W ((ROBOT_WIDTH / WHEEL_RADIUS) * 0.5f)
 
 //cyclograms
 #define BUFFER_LENGHT 10
-#define FORWARD_VEL 0.05f
+#define FORWARD_VEL 0.1f
 #define CELL_SIZE 0.18f

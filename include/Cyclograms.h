@@ -50,11 +50,13 @@ class Stop: public ICyclogram{
 
 class RotateSS90: public ICyclogram{
     void run(Sensor sensor, MotorState *motorState){
-        const float headingVel = FORWARD_VEL / (CELL_SIZE * 0.5f);
+        const float radius = (CELL_SIZE * 0.5f);
+
+        const float headingVel = FORWARD_VEL / radius;
         motorState->forwardVel = FORWARD_VEL;
 
         const float forwardTime = (CELL_SIZE * 0.5f) / FORWARD_VEL;
-        const float rotTime = (PI * 0.5f) / headingVel;
+        const float rotTime = (2.0f * PI * radius * 0.25f) / FORWARD_VEL;
 
         if(sensor.time < forwardTime || sensor.time > forwardTime + rotTime)
             motorState->headingVelocity = 0.0;
@@ -66,7 +68,7 @@ class RotateSS90: public ICyclogram{
     }
 };
 
-ICyclogram* _cyclograms[BUFFER_LENGHT] = {new RotateSS90(), new Idle()};
+ICyclogram* _cyclograms[BUFFER_LENGHT] = {new RotateSS90(), new Forward(), new Idle()};
 int _currentCyclogram = 0;
 float _lastCyclogramTime = 0.0;
 
@@ -87,5 +89,7 @@ void cyclogramsTick(){
     if(motorState.isComplited){
         _currentCyclogram++;
         _currentCyclogram %= BUFFER_LENGHT;
+        
+        _lastCyclogramTime = millis() / 1000.0f;
     }
 }
