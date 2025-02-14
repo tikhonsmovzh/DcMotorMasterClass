@@ -7,6 +7,9 @@
 #include "Motor.h"
 #include "DriveTrain.h"
 #include "Cyclograms.h"
+#include "Maze.h"
+
+Maze maze = Maze();
 
 void setup() {
   Serial.begin(9600);
@@ -16,6 +19,10 @@ void setup() {
   voltInit();
   motorInit();
   cyclogramsInit();
+
+  delay(1000);
+
+  maze.display();
 }
 
 void loop() {

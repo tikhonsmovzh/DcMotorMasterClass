@@ -1,7 +1,7 @@
 #pragma once
 
 //timer
-#define Ts_us 30000
+#define Ts_us 25000
 #define Ts_s (Ts_us / 1000000.0f)
 
 //encoders
@@ -52,3 +52,7 @@
 #define BUFFER_LENGHT 10
 #define FORWARD_VEL 0.1f
 #define CELL_SIZE 0.18f
+
+//Maze
+#define MAZE_SIZE_X 8
+#define MAZE_SIZE_Y 4

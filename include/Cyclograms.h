@@ -68,7 +68,7 @@ class RotateSS90: public ICyclogram{
     }
 };
 
-ICyclogram* _cyclograms[BUFFER_LENGHT] = {new RotateSS90(), new Forward(), new Idle()};
+ICyclogram* _cyclograms[BUFFER_LENGHT] = {/*new RotateSS90(),*/ new Idle()};
 int _currentCyclogram = 0;
 float _lastCyclogramTime = 0.0;
 
