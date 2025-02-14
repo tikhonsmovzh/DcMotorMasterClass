@@ -23,10 +23,10 @@ private:
 public:
     struct Cell
     {
-        WallType up;
-        WallType left;
-        WallType right;
-        WallType down;
+        WallType up: 2;
+        WallType left: 2;
+        WallType right: 2;
+        WallType down: 2;
 
         Cell(WallType down, WallType right, WallType up, WallType left){
             this->up = up;
@@ -53,7 +53,8 @@ public:
             _maze[MAZE_SIZE_X - 1][y].right = WALL;
     }
 
-    Cell get(int x, int y){
+    Cell get(int x, int y) const
+    {
         WallType up;
         WallType left;
 
@@ -84,11 +85,12 @@ public:
             _maze[x][y].down = cell.down;
     }
 
-    void display(){
+    void display() const
+    {
         Serial.print("+");
 
         for(int x = 0; x < MAZE_SIZE_X; x++){
-            Serial.print("---+");
+            Serial.print("----+");
         }
 
         Serial.println("");
@@ -103,18 +105,22 @@ public:
                 Cell cell = get(x, y / 2);
 
                 if(y % 2 == 0){
-                    Serial.print("   ");
+                    Serial.print("    ");
 
                     if(cell.right == WALL)
                         Serial.print("|");
+                    else if(cell.right == UNKNOWN)
+                        Serial.print(".");
                     else
                         Serial.print(" ");
                 }
                 else{
                     if(cell.down == WALL)
-                        Serial.print("---");
+                        Serial.print("----");
+                    else if(cell.down == UNKNOWN)
+                        Serial.print(" .. ");
                     else
-                        Serial.print("   ");
+                        Serial.print("    ");
 
                     Serial.print("+");
                 }

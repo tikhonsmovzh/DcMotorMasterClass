@@ -1,0 +1,68 @@
+#pragma once
+
+#include <Arduino.h>
+#include "Config.h"
+#include "Maze.h"
+#include "Queue.h"
+
+class MazeSolver{
+private:
+    struct CellPos
+    {
+        int x;
+        int y;
+
+        CellPos(int x, int y){
+            this->x = x;
+            this->y = y;
+        }
+    };
+    
+    Queue<CellPos> queue;
+
+    enum CellState{
+        UKNNOWN,
+        LEFT,
+        RIGHT,
+        UP,
+        DOWN
+    };
+
+    CellState cellStates[MAZE_SIZE_X][MAZE_SIZE_Y] = {UKNNOWN};
+
+public:
+    void findPath(int xEnd, int yEnd, int xStart, int yStart, Maze *maze){
+        for(int x = 0; x < MAZE_SIZE_X; x++)
+        for (int y = 0; y < MAZE_SIZE_Y; y++)
+            cellStates[x][y] = UKNNOWN;
+
+        queue.pushBack(CellPos(xEnd, yEnd));
+
+        while (!queue.isEmpty())
+        {
+            CellPos current = queue.popFront();
+
+            Maze::Cell cell = maze->get(current.x, current.y);
+
+            if(cell.left != Maze::WALL){
+                queue.pushBack(CellPos(current.x - 1, current.y));
+                cellStates[current.x][current.y] = RIGHT;
+            }
+                
+            if(cell.right != Maze::WALL){
+                queue.pushBack(CellPos(current.x + 1, current.y));
+                cellStates[current.x][current.y] = LEFT;
+            }
+            
+            if(cell.up != Maze::WALL){
+                queue.pushBack(CellPos(current.x, current.y - 1));
+                cellStates[current.x][current.y] = DOWN;
+            }
+
+            if(cell.down != Maze::WALL){
+                queue.pushBack(CellPos(current.x, current.y + 1));
+                cellStates[current.x][current.y] = UP;
+            }
+        }
+    }
+};

@@ -20,9 +20,8 @@ void setup() {
   motorInit();
   cyclogramsInit();
 
-  delay(1000);
-
-  maze.set(Maze::Cell(Maze::WALL, Maze::WALL, Maze::WALL, Maze::WALL), 0, 0);
+  maze.set(Maze::Cell(Maze::WALL, Maze::WALL, Maze::WALL, Maze::WALL), 8, 1);
+  maze.set(Maze::Cell(Maze::WALL, Maze::WALL, Maze::WALL, Maze::WALL), 9, 1);
 
   maze.display();
 }
