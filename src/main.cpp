@@ -22,6 +22,8 @@ void setup() {
 
   delay(1000);
 
+  maze.set(Maze::Cell(Maze::WALL, Maze::WALL, Maze::WALL, Maze::WALL), 0, 0);
+
   maze.display();
 }
 

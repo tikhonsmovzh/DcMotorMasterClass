@@ -1,0 +1,5 @@
+simavr_debug: build
+	C:\Users\tikho\.platformio\packages\tool-simavr\bin\simavr.exe -m atmega328p -f 16000000L .\.pio\build\nanoatmega328\firmware.elf
+
+build:
+	C:\Users\tikho\.platformio\penv\Scripts\platformio.exe run

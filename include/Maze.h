@@ -16,11 +16,6 @@ private:
     {
         WallType down: 2;
         WallType right: 2;
-
-        // RawCell(WallType down, WallType right){
-        //     this->down = down;
-        //     this->right = right;
-        // }
     };
 
     RawCell _maze[MAZE_SIZE_X][MAZE_SIZE_Y];
@@ -52,10 +47,10 @@ public:
         }
 
         for(int x = 0; x < MAZE_SIZE_X; x++)
-            _maze[x][MAZE_SIZE_Y - 1].down = UNKNOWN;
+            _maze[x][MAZE_SIZE_Y - 1].down = WALL;
 
         for(int y = 0; y < MAZE_SIZE_Y; y++)
-            _maze[MAZE_SIZE_X - 1][y].right = UNKNOWN;
+            _maze[MAZE_SIZE_X - 1][y].right = WALL;
     }
 
     Cell get(int x, int y){
@@ -90,23 +85,38 @@ public:
     }
 
     void display(){
-        for(int y = 0; y <= MAZE_SIZE_Y * 2; y++){
-            for(int x = 0; x <= MAZE_SIZE_X * 4; x++){
-                if(x % 4 == 0 && y % 2 == 0)
-                    Serial.print("+");
-                else
-                {
-                    if(y % 2 == 0)
-                    {
-                        RawCell rawCell = _maze[x / 4][y / 2];
+        Serial.print("+");
 
-                        if(rawCell.down == WALL)
-                            Serial.print("-");
-                        else
-                            Serial.print(" ");
-                    }
+        for(int x = 0; x < MAZE_SIZE_X; x++){
+            Serial.print("---+");
+        }
+
+        Serial.println("");
+
+        for(int y = 0; y < MAZE_SIZE_Y * 2; y++){
+            if(y % 2 == 1)
+                Serial.print("+");
+            else
+                Serial.print("|");
+
+            for(int x = 0; x < MAZE_SIZE_X; x++){
+                Cell cell = get(x, y / 2);
+
+                if(y % 2 == 0){
+                    Serial.print("   ");
+
+                    if(cell.right == WALL)
+                        Serial.print("|");
                     else
                         Serial.print(" ");
+                }
+                else{
+                    if(cell.down == WALL)
+                        Serial.print("---");
+                    else
+                        Serial.print("   ");
+
+                    Serial.print("+");
                 }
             }
 
