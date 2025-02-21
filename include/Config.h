@@ -54,8 +54,8 @@
 #define CELL_SIZE 0.18f
 
 //Maze
-#define MAZE_SIZE_X 16
-#define MAZE_SIZE_Y 4
+#define MAZE_SIZE_X 10
+#define MAZE_SIZE_Y 10
 
 //Queue
 #define MAX_QUEUE_SIZE (MAZE_SIZE_X * 2 + MAZE_SIZE_Y * 2)

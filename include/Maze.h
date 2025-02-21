@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Config.h"
-#include <Arduino.h>
 #include "Vec2Int.h"
 
 class Maze{  
@@ -34,6 +33,13 @@ public:
             this->down = down;
             this->left = left;
             this->right = right;
+        }
+
+        Cell(){
+            up = UNKNOWN;
+            down = UNKNOWN;
+            left = UNKNOWN;
+            right = UNKNOWN;
         }
     };
 
@@ -84,50 +90,5 @@ public:
 
         if(pos.y != MAZE_SIZE_Y - 1)
             _maze[pos.x][pos.y].down = cell.down;
-    }
-
-    void display() const
-    {
-        Serial.print("+");
-
-        for(int x = 0; x < MAZE_SIZE_X; x++){
-            Serial.print("----+");
-        }
-
-        Serial.println("");
-
-        for(int y = 0; y < MAZE_SIZE_Y * 2; y++){
-            if(y % 2 == 1)
-                Serial.print("+");
-            else
-                Serial.print("|");
-
-            for(int x = 0; x < MAZE_SIZE_X; x++){
-                Cell cell = get(Vec2Int(x, y / 2));
-
-                if(y % 2 == 0){
-                    Serial.print("    ");
-
-                    if(cell.right == WALL)
-                        Serial.print("|");
-                    else if(cell.right == UNKNOWN)
-                        Serial.print(".");
-                    else
-                        Serial.print(" ");
-                }
-                else{
-                    if(cell.down == WALL)
-                        Serial.print("----");
-                    else if(cell.down == UNKNOWN)
-                        Serial.print(" .. ");
-                    else
-                        Serial.print("    ");
-
-                    Serial.print("+");
-                }
-            }
-
-            Serial.println("");
-        }
     }
 };

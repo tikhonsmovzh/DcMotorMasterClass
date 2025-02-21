@@ -8,4 +8,9 @@ struct Vec2Int
         this->x = x;
         this->y = y;
     }
+
+    Vec2Int(){
+        x = 0;
+        y = 0;
+    }
 };

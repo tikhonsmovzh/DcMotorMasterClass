@@ -9,8 +9,11 @@
 #include "Cyclograms.h"
 #include "Maze.h"
 #include "Vec2Int.h"
+#include "MazeDrawer.h"
+#include "Mazes.h"
 
 Maze maze = Maze();
+MazeSolver solver = MazeSolver();
 
 void setup() {
   Serial.begin(9600);
@@ -21,10 +24,13 @@ void setup() {
   motorInit();
   cyclogramsInit();
 
-  maze.set(Maze::Cell(Maze::WALL, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(8, 1));
-  maze.set(Maze::Cell(Maze::WALL, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(9, 1));
+  //maze1(&maze);
 
-  maze.display();
+  generateMaze(MAZE_SIZE_X, MAZE_SIZE_Y, &maze);
+
+  solver.findPath(Vec2Int(0, 0), Vec2Int(9, 9), &maze);
+
+  drawMaze(&maze, &solver);
 }
 
 void loop() {
