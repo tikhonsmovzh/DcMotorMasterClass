@@ -4,21 +4,11 @@
 #include "Config.h"
 #include "Maze.h"
 #include "Queue.h"
+#include "Vec2Int.h"
 
 class MazeSolver{
 private:
-    struct CellPos
-    {
-        int x;
-        int y;
-
-        CellPos(int x, int y){
-            this->x = x;
-            this->y = y;
-        }
-    };
-    
-    Queue<CellPos> queue;
+    Queue<Vec2Int> queue;
 
     enum CellState{
         UKNNOWN,
@@ -36,31 +26,31 @@ public:
         for (int y = 0; y < MAZE_SIZE_Y; y++)
             cellStates[x][y] = UKNNOWN;
 
-        queue.pushBack(CellPos(xEnd, yEnd));
+        queue.pushBack(Vec2Int(xEnd, yEnd));
 
         while (!queue.isEmpty())
         {
-            CellPos current = queue.popFront();
+            Vec2Int current = queue.popFront();
 
-            Maze::Cell cell = maze->get(current.x, current.y);
+            Maze::Cell cell = maze->get(current);
 
             if(cell.left != Maze::WALL){
-                queue.pushBack(CellPos(current.x - 1, current.y));
+                queue.pushBack(Vec2Int(current.x - 1, current.y));
                 cellStates[current.x][current.y] = RIGHT;
             }
                 
             if(cell.right != Maze::WALL){
-                queue.pushBack(CellPos(current.x + 1, current.y));
+                queue.pushBack(Vec2Int(current.x + 1, current.y));
                 cellStates[current.x][current.y] = LEFT;
             }
             
             if(cell.up != Maze::WALL){
-                queue.pushBack(CellPos(current.x, current.y - 1));
+                queue.pushBack(Vec2Int(current.x, current.y - 1));
                 cellStates[current.x][current.y] = DOWN;
             }
 
             if(cell.down != Maze::WALL){
-                queue.pushBack(CellPos(current.x, current.y + 1));
+                queue.pushBack(Vec2Int(current.x, current.y + 1));
                 cellStates[current.x][current.y] = UP;
             }
         }

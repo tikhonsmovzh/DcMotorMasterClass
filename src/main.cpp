@@ -8,6 +8,7 @@
 #include "DriveTrain.h"
 #include "Cyclograms.h"
 #include "Maze.h"
+#include "Vec2Int.h"
 
 Maze maze = Maze();
 
@@ -20,8 +21,8 @@ void setup() {
   motorInit();
   cyclogramsInit();
 
-  maze.set(Maze::Cell(Maze::WALL, Maze::WALL, Maze::WALL, Maze::WALL), 8, 1);
-  maze.set(Maze::Cell(Maze::WALL, Maze::WALL, Maze::WALL, Maze::WALL), 9, 1);
+  maze.set(Maze::Cell(Maze::WALL, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(8, 1));
+  maze.set(Maze::Cell(Maze::WALL, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(9, 1));
 
   maze.display();
 }

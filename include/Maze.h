@@ -2,6 +2,7 @@
 
 #include "Config.h"
 #include <Arduino.h>
+#include "Vec2Int.h"
 
 class Maze{  
 public:
@@ -53,36 +54,36 @@ public:
             _maze[MAZE_SIZE_X - 1][y].right = WALL;
     }
 
-    Cell get(int x, int y) const
+    Cell get(Vec2Int pos) const
     {
         WallType up;
         WallType left;
 
-        if(x == 0)
+        if(pos.x == 0)
             left = WALL;
         else
-            left = _maze[x - 1][y].right;
+            left = _maze[pos.x - 1][pos.y].right;
 
-        if(y == 0)
+        if(pos.y == 0)
             up = WALL;
         else
-            up = _maze[x][y - 1].down;
+            up = _maze[pos.x][pos.y - 1].down;
 
-        return Cell(_maze[x][y].down, _maze[x][y].right, up, left);
+        return Cell(_maze[pos.x][pos.y].down, _maze[pos.x][pos.y].right, up, left);
     }
 
-    void set(Cell cell, int x, int y){
-        if(y != 0)
-            _maze[x][y - 1].down = cell.up;
+    void set(Cell cell, Vec2Int pos){
+        if(pos.y != 0)
+            _maze[pos.x][pos.y - 1].down = cell.up;
         
-        if(x != 0)
-            _maze[x - 1][y].right = cell.left;
+        if(pos.x != 0)
+            _maze[pos.x - 1][pos.y].right = cell.left;
 
-        if(x != MAZE_SIZE_X - 1)
-            _maze[x][y].right = cell.right;
+        if(pos.x != MAZE_SIZE_X - 1)
+            _maze[pos.x][pos.y].right = cell.right;
 
-        if(y != MAZE_SIZE_Y - 1)
-            _maze[x][y].down = cell.down;
+        if(pos.y != MAZE_SIZE_Y - 1)
+            _maze[pos.x][pos.y].down = cell.down;
     }
 
     void display() const
@@ -102,7 +103,7 @@ public:
                 Serial.print("|");
 
             for(int x = 0; x < MAZE_SIZE_X; x++){
-                Cell cell = get(x, y / 2);
+                Cell cell = get(Vec2Int(x, y / 2));
 
                 if(y % 2 == 0){
                     Serial.print("    ");
