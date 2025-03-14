@@ -24,9 +24,7 @@ void setup() {
   motorInit();
   cyclogramsInit();
 
-  //maze1(&maze);
-
-  generateMaze(MAZE_SIZE_X, MAZE_SIZE_Y, &maze);
+  maze2(&maze);
 
   solver.findPath(Vec2Int(0, 0), Vec2Int(9, 9), &maze);
 

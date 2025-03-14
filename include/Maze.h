@@ -79,16 +79,16 @@ public:
     }
 
     void set(Cell cell, Vec2Int pos){
-        if(pos.y != 0)
+        if(pos.y > 0)
             _maze[pos.x][pos.y - 1].down = cell.up;
         
-        if(pos.x != 0)
+        if(pos.x > 0)
             _maze[pos.x - 1][pos.y].right = cell.left;
 
-        if(pos.x != MAZE_SIZE_X - 1)
+        if(pos.x < MAZE_SIZE_X - 1)
             _maze[pos.x][pos.y].right = cell.right;
 
-        if(pos.y != MAZE_SIZE_Y - 1)
+        if(pos.y < MAZE_SIZE_Y - 1)
             _maze[pos.x][pos.y].down = cell.down;
     }
 };

@@ -52,7 +52,7 @@
 #define BUFFER_LENGHT 10
 #define FORWARD_VEL 0.1f
 #define CELL_SIZE 0.18f
-
+  
 //Maze
 #define MAZE_SIZE_X 10
 #define MAZE_SIZE_Y 10
