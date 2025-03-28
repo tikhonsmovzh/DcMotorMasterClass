@@ -11,11 +11,14 @@
 #include "Vec2Int.h"
 #include "MazeDrawer.h"
 #include "Mazes.h"
+#include "DistanceSensor.h"
+#include "MazeSolver.h"
 
 Maze maze = Maze();
 MazeSolver solver = MazeSolver();
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
 
   encsInit();
@@ -23,17 +26,20 @@ void setup() {
   voltInit();
   motorInit();
   cyclogramsInit();
+  distanceSensorsInit();
 
   maze2(&maze);
 
   solver.findPath(Vec2Int(0, 0), Vec2Int(9, 9), &maze);
 
-  drawMaze(&maze, &solver);
+  //drawMaze(&maze, &solver);
 }
 
-void loop() {
+void loop()
+{
   static uint32_t timer = micros();
-  while(micros() - timer < Ts_us);
+  while (micros() - timer < Ts_us)
+    ;
   timer = micros();
 
   encsTick();
@@ -42,6 +48,16 @@ void loop() {
   functionTick();
   voltTick();
   motorTick();
+  distanceSensorsTick();
 
   cyclogramsTick();
-} 
+  // Serial.print("Left Front: ");
+  // Serial.print(gDistanceFrontLeft);
+  // Serial.print("  Right Front: ");
+  // Serial.print(gDistanceFrontRight);
+  // Serial.print("  Left diagonal: ");
+  // Serial.println(gDistanceDiagonalLeft);
+  // Serial.print("  Right diagonal: ");
+  // Serial.print(gDistanceDiagonalRight);
+  // Serial.println();
+}

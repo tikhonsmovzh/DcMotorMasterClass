@@ -3,10 +3,14 @@
 #include <Arduino.h>
 #include "Config.h"
 #include "DriveTrain.h"
+#include "DistanceSensor.h"
 
 struct Sensor
 {
     float time = 0.0;
+
+    int16_t distanceFrontLeft = 0, distanceFrontRight = 0,
+    distanceDiagonalLeft = 0, distanceDiagonalRight = 0;
 };
 
 struct MotorState
@@ -23,28 +27,22 @@ public:
     virtual void run(Sensor, MotorState *) = 0;
 };
 
-class HalfForward : public ICyclogram
-{
-public:
-    void run(Sensor sensor, MotorState *motorState)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-
-        if (sensor.time > (CELL_SIZE * 0.5) / FORWARD_VEL)
-            motorState->isComplited = true;
-    }
-};
-
 class Forward : public ICyclogram
 {
+    bool _half = false;
+
 public:
+    Forward(bool half = false){
+        _half = half;
+    }
+
     void run(Sensor sensor, MotorState *motorState)
     {
         motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
+        motorState->headingVelocity = 
+        (TARGET_FORWARD_DISTANCE - sensor.distanceDiagonalLeft) * FORWARD_CYCLOGRAM_P;
 
-        if (sensor.time > CELL_SIZE / FORWARD_VEL)
+        if (sensor.time > CELL_SIZE / FORWARD_VEL * (_half ? 0.5f : 1.0f))
             motorState->isComplited = true;
     }
 };
@@ -121,7 +119,7 @@ public:
     }
 };
 
-ICyclogram *_cyclograms[BUFFER_LENGHT] = {/*new RotateSS90(),*/ new Idle()};
+ICyclogram *_cyclograms[BUFFER_LENGHT] = {/*new RotateSS90(),*/new Forward(), new Idle()};
 int _currentCyclogram = 0;
 float _lastCyclogramTime = 0.0;
 
@@ -136,6 +134,10 @@ void cyclogramsTick()
     Sensor sensor = Sensor();
 
     sensor.time = millis() / 1000.0f - _lastCyclogramTime;
+    sensor.distanceDiagonalLeft = gDistanceDiagonalLeft;
+    sensor.distanceDiagonalRight = gDistanceDiagonalRight;
+    sensor.distanceFrontLeft = gDistanceFrontLeft;
+    sensor.distanceFrontRight = gDistanceFrontRight;
 
     _cyclograms[_currentCyclogram]->run(sensor, &motorState);
 

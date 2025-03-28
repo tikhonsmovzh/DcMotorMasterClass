@@ -1,7 +1,7 @@
 #pragma once
 
 //timer
-#define Ts_us 25000
+#define Ts_us 10000
 #define Ts_s (Ts_us / 1000000.0f)
 
 //encoders
@@ -43,7 +43,7 @@
 //velocity regulators
 #define MAX_MOTOR_U 4.0f
 #define MOTOR_K_P 0.696f
-#define MOTOR_K_I 1.565f
+#define MOTOR_K_I 1.4 35f
 
 //drive train
 #define HEADING_VEL_TO_DELTA_W ((ROBOT_WIDTH / WHEEL_RADIUS) * 0.5f)
@@ -53,6 +53,9 @@
 #define FORWARD_VEL 0.1f
 #define ROTATE_VEL 0.1f
 #define CELL_SIZE 0.18f
+
+#define FORWARD_CYCLOGRAM_P 0.09f
+#define TARGET_FORWARD_DISTANCE 100
   
 //Maze
 #define MAZE_SIZE_X 10
@@ -60,3 +63,15 @@
 
 //Queue
 #define MAX_QUEUE_SIZE (MAZE_SIZE_X * 2 + MAZE_SIZE_Y * 2)
+
+//Distance sensors
+#define EMITTER_FRONT_PIN 11
+#define EMITTER_DIAGONAL_PIN 12
+
+#define TRIGGER_FRONT_LEFT_PIN A3
+#define TRIGGER_FRONT_RIGHT_PIN A0
+
+#define TRIGGER_DIAGONAL_LEFT_PIN A2
+#define TRIGGER_DIAGONAL_RIGHT_PIN A1
+
+#define LED_ENABLE_TIME_MICROS 50

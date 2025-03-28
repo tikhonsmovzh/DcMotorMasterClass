@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Maze.h"
-#include "MazeSolver"
+#include "MazeSolver.h"
 #include "Config.h"
 #include "Arduino.h"
 #include "Vec2Int.h"
