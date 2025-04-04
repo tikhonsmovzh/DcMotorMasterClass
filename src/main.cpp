@@ -7,15 +7,8 @@
 #include "Motor.h"
 #include "DriveTrain.h"
 #include "Cyclograms.h"
-#include "Maze.h"
-#include "Vec2Int.h"
-#include "MazeDrawer.h"
-#include "Mazes.h"
-#include "DistanceSensor.h"
-#include "MazeSolver.h"
+//#include "DistanceSensor.h"
 
-Maze maze = Maze();
-MazeSolver solver = MazeSolver();
 
 void setup()
 {
@@ -26,20 +19,13 @@ void setup()
   voltInit();
   motorInit();
   cyclogramsInit();
-  distanceSensorsInit();
-
-  maze2(&maze);
-
-  solver.findPath(Vec2Int(0, 0), Vec2Int(9, 9), &maze);
-
-  //drawMaze(&maze, &solver);
+  //distanceSensorsInit();
 }
 
 void loop()
 {
   static uint32_t timer = micros();
-  while (micros() - timer < Ts_us)
-    ;
+  while (micros() - timer < Ts_us);
   timer = micros();
 
   encsTick();
@@ -48,9 +34,10 @@ void loop()
   functionTick();
   voltTick();
   motorTick();
-  distanceSensorsTick();
+  //distanceSensorsTick();
 
   cyclogramsTick();
+  
   // Serial.print("Left Front: ");
   // Serial.print(gDistanceFrontLeft);
   // Serial.print("  Right Front: ");

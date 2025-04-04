@@ -8,6 +8,11 @@
 
 RobotState gRobotState;
 
+void odometryInit(){
+    gRobotState.x = 0.0f;
+    gRobotState.y = 0.0f;
+}
+
 void odometryTick(){
     float lHeading = gLeftHeading, rHeading = gRightHeading;
 

@@ -4,13 +4,14 @@
 #include "Config.h"
 #include "DriveTrain.h"
 #include "DistanceSensor.h"
+#include "Vector.h"
 
 struct Sensor
 {
     float time = 0.0;
 
     int16_t distanceFrontLeft = 0, distanceFrontRight = 0,
-    distanceDiagonalLeft = 0, distanceDiagonalRight = 0;
+            distanceDiagonalLeft = 0, distanceDiagonalRight = 0;
 };
 
 struct MotorState
@@ -32,15 +33,16 @@ class Forward : public ICyclogram
     bool _half = false;
 
 public:
-    Forward(bool half = false){
+    Forward(bool half = false)
+    {
         _half = half;
     }
 
     void run(Sensor sensor, MotorState *motorState)
     {
         motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 
-        (TARGET_FORWARD_DISTANCE - sensor.distanceDiagonalLeft) * FORWARD_CYCLOGRAM_P;
+        motorState->headingVelocity =
+            (TARGET_FORWARD_DISTANCE - sensor.distanceDiagonalLeft) * FORWARD_CYCLOGRAM_P;
 
         if (sensor.time > CELL_SIZE / FORWARD_VEL * (_half ? 0.5f : 1.0f))
             motorState->isComplited = true;
@@ -119,8 +121,7 @@ public:
     }
 };
 
-ICyclogram *_cyclograms[BUFFER_LENGHT] = {/*new RotateSS90(),*/new Forward(), new Idle()};
-int _currentCyclogram = 0;
+Vector<ICyclogram *> _cyclograms;
 float _lastCyclogramTime = 0.0;
 
 void cyclogramsInit()
@@ -130,6 +131,15 @@ void cyclogramsInit()
 
 void cyclogramsTick()
 {
+    if (_cyclograms.size() == 0)
+    {
+        setDriveVelocity(0.0, 0.0);
+
+        _lastCyclogramTime = millis() / 1000.0f;
+
+        return;
+    }
+
     MotorState motorState = MotorState();
     Sensor sensor = Sensor();
 
@@ -139,15 +149,31 @@ void cyclogramsTick()
     sensor.distanceFrontLeft = gDistanceFrontLeft;
     sensor.distanceFrontRight = gDistanceFrontRight;
 
-    _cyclograms[_currentCyclogram]->run(sensor, &motorState);
+    _cyclograms[0]->run(sensor, &motorState);
 
     setDriveVelocity(motorState.forwardVel, motorState.headingVelocity);
 
     if (motorState.isComplited)
     {
-        _currentCyclogram++;
-        _currentCyclogram %= BUFFER_LENGHT;
+        _cyclograms.remove(0);
+
+        setDriveVelocity(0.0, 0.0);
 
         _lastCyclogramTime = millis() / 1000.0f;
     }
+}
+
+bool isCyclogramsEmpty(){
+    return _cyclograms.size() == 0;
+}
+
+void addCyclogramToQueue(ICyclogram *cyclogram)
+{
+    _cyclograms.push_back(cyclogram);
+}
+
+void runCyclogram(ICyclogram *cyclogram)
+{
+    _cyclograms.clear();
+    addCyclogramToQueue(cyclogram);
 }

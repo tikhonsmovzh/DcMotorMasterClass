@@ -43,13 +43,12 @@
 //velocity regulators
 #define MAX_MOTOR_U 4.0f
 #define MOTOR_K_P 0.696f
-#define MOTOR_K_I 1.4 35f
+#define MOTOR_K_I 1.4
 
 //drive train
 #define HEADING_VEL_TO_DELTA_W ((ROBOT_WIDTH / WHEEL_RADIUS) * 0.5f)
 
 //cyclograms
-#define BUFFER_LENGHT 10
 #define FORWARD_VEL 0.1f
 #define ROTATE_VEL 0.1f
 #define CELL_SIZE 0.18f
@@ -60,6 +59,17 @@
 //Maze
 #define MAZE_SIZE_X 10
 #define MAZE_SIZE_Y 10
+
+#define HORIZONTAL_WALL "---"
+#define VERITICAL_WALL "|"
+
+#define HORIZONTAL_WALL_ENPTY "   "
+#define VERITICAL_WALL_EMPTY " "
+
+#define HORIZONTAL_WALL_UNKNOWN " . "
+#define VERITICAL_WALL_UNKNOWN "."
+
+#define CORNER "+"
 
 //Queue
 #define MAX_QUEUE_SIZE (MAZE_SIZE_X * 2 + MAZE_SIZE_Y * 2)
@@ -75,3 +85,9 @@
 #define TRIGGER_DIAGONAL_RIGHT_PIN A1
 
 #define LED_ENABLE_TIME_MICROS 50
+
+//Maze explorer
+#define FORWARD_WALL_TRIGGER_DISTANCE 100
+#define DIAGONAL_WALL_TRIGGER_DISTANCE 100
+
+#define H_SENS PI * 0.25

@@ -8,11 +8,12 @@
 
 void drawMaze(Maze *maze, MazeSolver *solver)
 {
-    Serial.print("+");
+    Serial.print(CORNER);
 
     for (int x = 0; x < MAZE_SIZE_X; x++)
     {
-        Serial.print("---+");
+        Serial.print(HORIZONTAL_WALL);
+        Serial.print(CORNER);
     }
 
     Serial.println("");
@@ -20,9 +21,9 @@ void drawMaze(Maze *maze, MazeSolver *solver)
     for (int y = 0; y < MAZE_SIZE_Y * 2; y++)
     {
         if (y % 2 == 1)
-            Serial.print("+");
+            Serial.print(CORNER);
         else
-            Serial.print("|");
+            Serial.print(VERITICAL_WALL);
 
         for (int x = 0; x < MAZE_SIZE_X; x++)
         {
@@ -71,22 +72,22 @@ void drawMaze(Maze *maze, MazeSolver *solver)
                     Serial.print("   ");
 
                 if (cell.right == Maze::WALL)
-                    Serial.print("|");
+                    Serial.print(VERITICAL_WALL);
                 else if (cell.right == Maze::UNKNOWN)
-                    Serial.print(".");
+                    Serial.print(VERITICAL_WALL_UNKNOWN);
                 else
-                    Serial.print(" ");
+                    Serial.print(VERITICAL_WALL_EMPTY);
             }
             else
             {
                 if (cell.down == Maze::WALL)
-                    Serial.print("---");
+                    Serial.print(HORIZONTAL_WALL);
                 else if (cell.down == Maze::UNKNOWN)
-                    Serial.print(" . ");
+                    Serial.print(HORIZONTAL_WALL_UNKNOWN);
                 else
-                    Serial.print("   ");
+                    Serial.print(HORIZONTAL_WALL_ENPTY);
 
-                Serial.print("+");
+                Serial.print(CORNER);
             }
         }
 
