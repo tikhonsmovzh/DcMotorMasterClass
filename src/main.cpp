@@ -7,11 +7,13 @@
 #include "Motor.h"
 #include "DriveTrain.h"
 #include "Cyclograms.h"
-//#include "DistanceSensor.h"
-
+#include "DistanceSensor.h"
+#include "MazeExplorer.h"
 
 void setup()
 {
+  delay(1000);
+
   Serial.begin(9600);
 
   encsInit();
@@ -19,7 +21,12 @@ void setup()
   voltInit();
   motorInit();
   cyclogramsInit();
-  //distanceSensorsInit();
+  distanceSensorsInit();
+  mazeExplorerInit();
+
+  addCyclogramToQueue(new Forward(true));
+  // addCyclogramToQueue(new Rotate90(true));
+  // addCyclogramToQueue(new Rotate90(true));
 }
 
 void loop()
@@ -34,9 +41,10 @@ void loop()
   functionTick();
   voltTick();
   motorTick();
-  //distanceSensorsTick();
+  distanceSensorsTick();
 
   cyclogramsTick();
+  mazeExplorerTick();
   
   // Serial.print("Left Front: ");
   // Serial.print(gDistanceFrontLeft);

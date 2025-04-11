@@ -21,12 +21,12 @@ bool isWallForward()
 
 bool isWallLeft()
 {
-    return gDistanceDiagonalLeft > FORWARD_WALL_TRIGGER_DISTANCE;
+    return gDistanceDiagonalLeft > DIAGONAL_WALL_TRIGGER_LEFT_DISTANCE;
 }
 
 bool isWallRight()
 {
-    return gDistanceDiagonalRight > FORWARD_WALL_TRIGGER_DISTANCE;
+    return gDistanceDiagonalRight > DIAGONAL_WALL_TRIGGER_RIGHT_DISTANCE;
 }
 
 void mazeExplorerInit()
@@ -85,11 +85,11 @@ void mazeExplorerTick()
         nextCell.right = Maze::EMPTY;
 
     if(nextCell.left == Maze::EMPTY)
-        runCyclogram(new RotateSS90(true));
+        runCyclogram(new Rotate90(true));
     else if(nextCell.up == Maze::EMPTY)
         runCyclogram(new Forward());
     else if(nextCell.right == Maze::EMPTY)
-        runCyclogram(new RotateSS90(false));
+        runCyclogram(new Rotate90(false));
     else
         runCyclogram(new Rotate180());
 

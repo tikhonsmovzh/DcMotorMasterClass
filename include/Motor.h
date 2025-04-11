@@ -9,6 +9,9 @@
 void setLeftU(float powerU){
     int pwm = 255 * constrain(powerU / gVoltmeterVolts, -1.0f, 1.0f);
 
+    if(gVoltmeterVolts < USB_MOTOR_POWER)
+        pwm = 0;
+
     if(pwm * LEFT_MOTOR_DIR > 0)
         digitalWrite(LEFT_MOTOR_DIR_PIN, LOW);
     else
@@ -19,6 +22,9 @@ void setLeftU(float powerU){
 
 void setRightU(float powerU){
     int pwm = 255 * constrain(powerU / gVoltmeterVolts, -1.0f, 1.0f);
+    
+    if(gVoltmeterVolts < USB_MOTOR_POWER)
+        pwm = 0;
 
     if(pwm * RIGHT_MOTOR_DIR > 0)
         digitalWrite(RIGHT_MOTOR_DIR_PIN, LOW);

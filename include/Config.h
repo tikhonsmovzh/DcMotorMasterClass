@@ -16,11 +16,11 @@
 #define TICKS_TO_RAD  (2.0f * PI / (ENC_PPR * GEAR_RATIO))
 
 //vel estimator
-#define LPF_ALPHA 0.5f
+#define LPF_ALPHA 0.45f
 
 //odometry
-#define WHEEL_RADIUS (0.034f / 2.0f)
-#define ROBOT_WIDTH 0.08f
+#define WHEEL_RADIUS (0.033f / 2.0f)
+#define ROBOT_WIDTH 0.074f
 
 //functions switcher
 #define FUNCTION_PIN A6
@@ -40,21 +40,25 @@
 #define RIGHT_MOTOR_DIR_PIN 8 
 #define RIGHT_MOTOR_PWM_PIN 10
 
+#define USB_MOTOR_POWER 6.0
+
 //velocity regulators
-#define MAX_MOTOR_U 4.0f
-#define MOTOR_K_P 0.696f
-#define MOTOR_K_I 1.4
+#define MAX_MOTOR_U 9.0f
+#define MOTOR_K_P 0.95f
+#define MOTOR_K_I 2.9f
 
 //drive train
 #define HEADING_VEL_TO_DELTA_W ((ROBOT_WIDTH / WHEEL_RADIUS) * 0.5f)
 
 //cyclograms
-#define FORWARD_VEL 0.1f
-#define ROTATE_VEL 0.1f
+#define FORWARD_VEL 0.2f
+#define ROTATE_VEL 5.0f
 #define CELL_SIZE 0.18f
 
-#define FORWARD_CYCLOGRAM_P 0.09f
-#define TARGET_FORWARD_DISTANCE 100
+#define FORWARD_CYCLOGRAM_P 0.01f
+#define TARGET_FORWARD_DISTANCE 102
+
+#define ROTATE_COLLIBREATE_K 0.95f
   
 //Maze
 #define MAZE_SIZE_X 10
@@ -87,7 +91,8 @@
 #define LED_ENABLE_TIME_MICROS 50
 
 //Maze explorer
-#define FORWARD_WALL_TRIGGER_DISTANCE 100
-#define DIAGONAL_WALL_TRIGGER_DISTANCE 100
+#define FORWARD_WALL_TRIGGER_DISTANCE 30
+#define DIAGONAL_WALL_TRIGGER_RIGHT_DISTANCE 25
+#define DIAGONAL_WALL_TRIGGER_LEFT_DISTANCE 40
 
 #define H_SENS PI * 0.25

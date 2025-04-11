@@ -41,6 +41,7 @@ public:
     void run(Sensor sensor, MotorState *motorState)
     {
         motorState->forwardVel = FORWARD_VEL;
+        
         motorState->headingVelocity =
             (TARGET_FORWARD_DISTANCE - sensor.distanceDiagonalLeft) * FORWARD_CYCLOGRAM_P;
 
@@ -91,12 +92,12 @@ public:
     }
 };
 
-class RotateSS90 : public ICyclogram
+class Rotate90 : public ICyclogram
 {
     bool _direction;
 
 public:
-    RotateSS90(bool direction)
+    Rotate90(bool direction = true)
     {
         _direction = direction;
     }
@@ -108,15 +109,11 @@ public:
         const float headingVel = (_direction ? 1.0 : -1.0) * (FORWARD_VEL / radius);
         motorState->forwardVel = FORWARD_VEL;
 
-        const float forwardTime = (CELL_SIZE * 0.5f) / FORWARD_VEL;
         const float rotTime = (2.0f * PI * radius * 0.25f) / FORWARD_VEL;
 
-        if (sensor.time < forwardTime || sensor.time > forwardTime + rotTime)
-            motorState->headingVelocity = 0.0;
-        else
-            motorState->headingVelocity = headingVel;
+        motorState->headingVelocity = headingVel;
 
-        if (rotTime + forwardTime * 2.0f < sensor.time)
+        if (rotTime * ROTATE_COLLIBREATE_K < sensor.time)
             motorState->isComplited = true;
     }
 };
