@@ -41,11 +41,17 @@ public:
     void run(Sensor sensor, MotorState *motorState)
     {
         motorState->forwardVel = FORWARD_VEL;
-        
-        motorState->headingVelocity =
-            (TARGET_FORWARD_DISTANCE - sensor.distanceDiagonalLeft) * FORWARD_CYCLOGRAM_P;
+        motorState->headingVelocity = 0.0f;
 
-        if (sensor.time > CELL_SIZE / FORWARD_VEL * (_half ? 0.5f : 1.0f))
+        int16_t err = TARGET_FORWARD_DISTANCE_LEFT - sensor.distanceDiagonalLeft;
+
+        if(sensor.distanceDiagonalLeft < sensor.distanceDiagonalRight)
+            err = -(TARGET_FORWARD_DISTANCE_RIGHT - sensor.distanceDiagonalRight);
+        
+         motorState->headingVelocity = err * FORWARD_CYCLOGRAM_P;
+
+        if (sensor.time > CELL_SIZE / FORWARD_VEL * (_half ? 0.5f : 1.0f) * FORWARD_COLLIBREATE_K ||
+            min(sensor.distanceFrontLeft, sensor.distanceFrontRight) > FORWARD_RIDE_TRIGGER_DIST)
             motorState->isComplited = true;
     }
 };
@@ -65,7 +71,7 @@ public:
         motorState->forwardVel = 0.0;
         motorState->headingVelocity = (_direction ? 1.0 : -1.0) * ROTATE_VEL;
 
-        if (sensor.time > PI / ROTATE_VEL)
+        if (sensor.time > PI / ROTATE_VEL * ROTATE180_COLLIBREATE_K)
             motorState->isComplited = true;
     }
 };

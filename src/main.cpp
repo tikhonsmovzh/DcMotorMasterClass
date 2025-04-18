@@ -23,10 +23,11 @@ void setup()
   cyclogramsInit();
   distanceSensorsInit();
   mazeExplorerInit();
+  odometryInit();
 
   addCyclogramToQueue(new Forward(true));
   // addCyclogramToQueue(new Rotate90(true));
-  // addCyclogramToQueue(new Rotate90(true));
+  //addCyclogramToQueue(new Rotate180());
 }
 
 void loop()
@@ -45,7 +46,8 @@ void loop()
 
   cyclogramsTick();
   mazeExplorerTick();
-  
+
+
   // Serial.print("Left Front: ");
   // Serial.print(gDistanceFrontLeft);
   // Serial.print("  Right Front: ");

@@ -62,10 +62,25 @@ Maze::Cell rotateCell(float h, Maze::Cell cell){
     return rotatedCell;
 }
 
+uint8_t steps = 0;
+uint32_t _lastCycTime = 0;
+
 void mazeExplorerTick()
 {
-    if(!isCyclogramsEmpty())
+    if(!isCyclogramsEmpty() || steps >= 5){
+        _lastCycTime = millis();
         return;
+    }
+
+    if(millis() - _lastCycTime < 20)
+        return;
+
+    // steps++;
+
+    // Serial.print(gRobotState.x);
+    // Serial.print(" ");
+    // Serial.print(gRobotState.y);
+    // Serial.println();
 
     Maze::Cell nextCell;
 
@@ -123,4 +138,7 @@ void mazeExplorerTick()
         rotatedNextCell.right = mazeCell.right;
 
     _maze.set(rotatedNextCell, robotPosition);
+
+    // if(steps >= 5)
+    //     drawMaze(&_maze, nullptr);
 }

@@ -9,8 +9,8 @@
 RobotState gRobotState;
 
 void odometryInit(){
-    gRobotState.x = 0.0f;
-    gRobotState.y = 0.0f;
+    gRobotState.x = CELL_SIZE * 0.5f;
+    gRobotState.y = CELL_SIZE * 0.5f;
 }
 
 void odometryTick(){
