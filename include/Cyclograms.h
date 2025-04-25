@@ -22,6 +22,26 @@ struct MotorState
     bool isComplited = false;
 };
 
+void callibrateRot(Sensor sensor, MotorState *motorState)
+{
+    bool leftWall = gDistanceDiagonalLeft > DIAGONAL_WALL_TRIGGER_LEFT_DISTANCE;
+    bool rightWall = gDistanceDiagonalRight > DIAGONAL_WALL_TRIGGER_RIGHT_DISTANCE;
+
+    if(!leftWall && !rightWall){
+        motorState->headingVelocity = 0.0;
+        return;
+    }
+
+    int16_t err = TARGET_FORWARD_DISTANCE_LEFT - sensor.distanceDiagonalLeft;
+
+    if ((sensor.distanceDiagonalLeft < sensor.distanceDiagonalRight || !leftWall) && rightWall)
+        err = -(TARGET_FORWARD_DISTANCE_RIGHT - sensor.distanceDiagonalRight);
+
+    float u = err * FORWARD_CYCLOGRAM_P;
+
+    motorState->headingVelocity = u;
+}
+
 class ICyclogram
 {
 public:
@@ -41,17 +61,11 @@ public:
     void run(Sensor sensor, MotorState *motorState)
     {
         motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
 
-        int16_t err = TARGET_FORWARD_DISTANCE_LEFT - sensor.distanceDiagonalLeft;
-
-        if(sensor.distanceDiagonalLeft < sensor.distanceDiagonalRight)
-            err = -(TARGET_FORWARD_DISTANCE_RIGHT - sensor.distanceDiagonalRight);
-        
-         motorState->headingVelocity = err * FORWARD_CYCLOGRAM_P;
+        callibrateRot(sensor, motorState);
 
         if (sensor.time > CELL_SIZE / FORWARD_VEL * (_half ? 0.5f : 1.0f) * FORWARD_COLLIBREATE_K ||
-            min(sensor.distanceFrontLeft, sensor.distanceFrontRight) > FORWARD_RIDE_TRIGGER_DIST)
+            max(sensor.distanceFrontLeft, sensor.distanceFrontRight) > FORWARD_RIDE_TRIGGER_DIST)
             motorState->isComplited = true;
     }
 };
@@ -68,10 +82,29 @@ public:
 
     void run(Sensor sensor, MotorState *motorState)
     {
-        motorState->forwardVel = 0.0;
-        motorState->headingVelocity = (_direction ? 1.0 : -1.0) * ROTATE_VEL;
+        float rotTime = PI / ROTATE_VEL * ROTATE180_COLLIBREATE_K;
+        float forwardTime = CELL_SIZE / FORWARD_VEL;
 
-        if (sensor.time > PI / ROTATE_VEL * ROTATE180_COLLIBREATE_K)
+        float addedTime = ROTATE180_ADED_DIST / FORWARD_VEL;
+
+        if (sensor.time < rotTime)
+        {
+            motorState->headingVelocity = (_direction ? 1.0 : -1.0) * ROTATE_VEL;
+            motorState->forwardVel = 0.0;
+        }
+        else if (sensor.time < forwardTime + rotTime + addedTime)
+        {
+            motorState->forwardVel = -FORWARD_VEL;
+
+            callibrateRot(sensor, motorState);
+        }
+        else if (sensor.time < forwardTime * 2 + addedTime + rotTime - (ROBOT_WHHEL_DIF / FORWARD_VEL))
+        {
+            motorState->forwardVel = FORWARD_VEL;
+
+            callibrateRot(sensor, motorState);
+        }
+        else
             motorState->isComplited = true;
     }
 };
@@ -158,6 +191,7 @@ void cyclogramsTick()
 
     if (motorState.isComplited)
     {
+        delete _cyclograms[0];
         _cyclograms.remove(0);
 
         setDriveVelocity(0.0, 0.0);
@@ -166,7 +200,8 @@ void cyclogramsTick()
     }
 }
 
-bool isCyclogramsEmpty(){
+bool isCyclogramsEmpty()
+{
     return _cyclograms.size() == 0;
 }
 
@@ -177,6 +212,10 @@ void addCyclogramToQueue(ICyclogram *cyclogram)
 
 void runCyclogram(ICyclogram *cyclogram)
 {
+    for (int i = 0; i < _cyclograms.size(); i++)
+        delete _cyclograms[i];
+
     _cyclograms.clear();
+
     addCyclogramToQueue(cyclogram);
 }

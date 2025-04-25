@@ -84,3 +84,19 @@ void distanceSensorsISRTick(){
 ISR(TIMER2_COMPA_vect) {
     distanceSensorsISRTick();
 }
+
+bool isWallForward()
+{
+    return gDistanceFrontLeft > FORWARD_WALL_TRIGGER_DISTANCE &&
+           gDistanceFrontRight > FORWARD_WALL_TRIGGER_DISTANCE;
+}
+
+bool isWallLeft()
+{
+    return gDistanceDiagonalLeft > DIAGONAL_WALL_TRIGGER_LEFT_DISTANCE;
+}
+
+bool isWallRight()
+{
+    return gDistanceDiagonalRight > DIAGONAL_WALL_TRIGGER_RIGHT_DISTANCE;
+}

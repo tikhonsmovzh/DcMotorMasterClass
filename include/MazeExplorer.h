@@ -13,22 +13,6 @@
 Maze _maze = Maze();
 MazeSolver _solver = MazeSolver();
 
-bool isWallForward()
-{
-    return gDistanceFrontLeft > FORWARD_WALL_TRIGGER_DISTANCE &&
-           gDistanceFrontRight > FORWARD_WALL_TRIGGER_DISTANCE;
-}
-
-bool isWallLeft()
-{
-    return gDistanceDiagonalLeft > DIAGONAL_WALL_TRIGGER_LEFT_DISTANCE;
-}
-
-bool isWallRight()
-{
-    return gDistanceDiagonalRight > DIAGONAL_WALL_TRIGGER_RIGHT_DISTANCE;
-}
-
 void mazeExplorerInit()
 {
 
@@ -62,20 +46,18 @@ Maze::Cell rotateCell(float h, Maze::Cell cell){
     return rotatedCell;
 }
 
-uint8_t steps = 0;
 uint32_t _lastCycTime = 0;
 
 void mazeExplorerTick()
 {
-    if(!isCyclogramsEmpty() || steps >= 5){
+    if(!isCyclogramsEmpty()){
         _lastCycTime = millis();
+
         return;
     }
 
-    if(millis() - _lastCycTime < 20)
+    if(millis() - _lastCycTime < CYCLOGRAM_DELAY)
         return;
-
-    // steps++;
 
     // Serial.print(gRobotState.x);
     // Serial.print(" ");
@@ -138,7 +120,4 @@ void mazeExplorerTick()
         rotatedNextCell.right = mazeCell.right;
 
     _maze.set(rotatedNextCell, robotPosition);
-
-    // if(steps >= 5)
-    //     drawMaze(&_maze, nullptr);
 }

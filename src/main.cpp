@@ -9,24 +9,41 @@
 #include "Cyclograms.h"
 #include "DistanceSensor.h"
 #include "MazeExplorer.h"
+#include "Config.h"
 
 void setup()
 {
-  delay(1000);
-
   Serial.begin(9600);
 
-  encsInit();
-  functionInit();
-  voltInit();
+  pinMode(ADDITION_LED_PIN, OUTPUT);
+
+  digitalWrite(ADDITION_LED_PIN, 0);
+
   motorInit();
+  functionInit();
+
+  setLeftU(0.0f);
+  setRightU(0.0f);
+
+  do{
+    functionTick();
+  }
+  while (gCurrentFunction != 16);
+
+  delay(1000);
+  
+  digitalWrite(ADDITION_LED_PIN, 1);
+
+  encsInit();
+  voltInit();
   cyclogramsInit();
   distanceSensorsInit();
   mazeExplorerInit();
   odometryInit();
 
+
   addCyclogramToQueue(new Forward(true));
-  // addCyclogramToQueue(new Rotate90(true));
+  //addCyclogramToQueue(new Rotate90(true));
   //addCyclogramToQueue(new Rotate180());
 }
 
@@ -44,17 +61,16 @@ void loop()
   motorTick();
   distanceSensorsTick();
 
-  cyclogramsTick();
   mazeExplorerTick();
-
+  cyclogramsTick();
 
   // Serial.print("Left Front: ");
-  // Serial.print(gDistanceFrontLeft);
-  // Serial.print("  Right Front: ");
-  // Serial.print(gDistanceFrontRight);
+  //  Serial.print(gDistanceFrontLeft);
+  //  Serial.print("  Right Front: ");
+  //  Serial.print(gDistanceFrontRight);
   // Serial.print("  Left diagonal: ");
   // Serial.println(gDistanceDiagonalLeft);
   // Serial.print("  Right diagonal: ");
   // Serial.print(gDistanceDiagonalRight);
-  // Serial.println();
+  //  Serial.println();
 }
