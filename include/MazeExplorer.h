@@ -13,111 +13,308 @@
 Maze _maze = Maze();
 MazeSolver _solver = MazeSolver();
 
+enum Direction
+{
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+};
+
 void mazeExplorerInit()
 {
-
+    _maze.set(Maze::Cell(Maze::EMPTY, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
 }
 
-Maze::Cell rotateCell(float h, Maze::Cell cell){
-    Maze::Cell rotatedCell;
+Vec2Int _currentPos(0, 1);
+Direction _currentRobotDirection = DOWN;
 
-    if(abs(h) < H_SENS){
-        rotatedCell.up = cell.up;
-        rotatedCell.down = cell.down;
-        rotatedCell.left = cell.left;
-        rotatedCell.right = cell.right;
-    } else if(abs(h - PI * 0.5f) < H_SENS){
-        rotatedCell.left = cell.up;
-        rotatedCell.right = cell.down;
-        rotatedCell.down = cell.left;
-        rotatedCell.up = cell.right;
-    } else if(abs(h - PI) < H_SENS){
-        rotatedCell.up = cell.down;
-        rotatedCell.down = cell.up;
-        rotatedCell.left = cell.right;
-        rotatedCell.right = cell.left;
-    } else {
-        rotatedCell.left = cell.down;
-        rotatedCell.right = cell.up;
-        rotatedCell.down = cell.right;
-        rotatedCell.up = cell.left;
+Maze::Cell cellToLocal(Maze::Cell cell, Direction dir)
+{
+    switch (dir)
+    {
+    case UP:
+        return cell;
+
+    case DOWN:
+    {
+        Maze::Cell resultCell;
+
+        resultCell.up = cell.down;
+        resultCell.down = cell.up;
+        resultCell.left = cell.right;
+        resultCell.right = cell.left;
+
+        return resultCell;
     }
 
-    return rotatedCell;
-}
+    case LEFT:
+    {
+        Maze::Cell resultCell;
 
-uint32_t _lastCycTime = 0;
+        resultCell.up = cell.right;
+        resultCell.down = cell.left;
+        resultCell.left = cell.up;
+        resultCell.right = cell.down;
+
+        return resultCell;
+    }
+
+    case RIGHT:
+    {
+        Maze::Cell resultCell;
+
+        resultCell.up = cell.left;
+        resultCell.down = cell.right;
+        resultCell.left = cell.down;
+        resultCell.right = cell.up;
+
+        return resultCell;
+    }
+    }
+}
 
 void mazeExplorerTick()
 {
-    if(!isCyclogramsEmpty()){
-        _lastCycTime = millis();
-
+    if (!isCyclogramsEmpty())
         return;
+
+    Maze::Cell currentCell = _maze.get(_currentPos);
+
+    Maze::Cell currentLocaledCell = cellToLocal(currentCell, _currentRobotDirection);
+
+    Maze::Cell savedLocatedCell = currentLocaledCell;
+
+    if (currentLocaledCell.left == Maze::UNKNOWN)
+        currentLocaledCell.left = isWallLeft() ? Maze::WALL : Maze::EMPTY;
+    if (currentLocaledCell.right == Maze::UNKNOWN)
+        currentLocaledCell.right = isWallRight() ? Maze::WALL : Maze::EMPTY;
+    if (currentLocaledCell.up == Maze::UNKNOWN)
+        currentLocaledCell.up = isWallForward() ? Maze::WALL : Maze::EMPTY;
+
+    _maze.set(cellToLocal(currentLocaledCell, _currentRobotDirection), _currentPos);
+
+    if (savedLocatedCell.left == Maze::UNKNOWN && currentLocaledCell.left == Maze::EMPTY)
+    {
+        addCyclogramToQueue(new Rotate90(true));
+
+        switch (_currentRobotDirection)
+        {
+        case UP:
+        {
+            _currentRobotDirection = LEFT;
+            break;
+        }
+
+        case LEFT:
+        {
+            _currentRobotDirection = DOWN;
+            break;
+        }
+
+        case RIGHT:
+        {
+            _currentRobotDirection = UP;
+            break;
+        }
+
+        case DOWN:
+        {
+            _currentRobotDirection = RIGHT;
+            break;
+        }
+        }
+    }
+    else if (savedLocatedCell.right == Maze::UNKNOWN && currentLocaledCell.right == Maze::EMPTY)
+    {
+        addCyclogramToQueue(new Rotate90(false));
+
+        switch (_currentRobotDirection)
+        {
+        case UP:
+        {
+            _currentRobotDirection = RIGHT;
+            break;
+        }
+
+        case LEFT:
+        {
+            _currentRobotDirection = UP;
+            break;
+        }
+
+        case RIGHT:
+        {
+            _currentRobotDirection = DOWN;
+            break;
+        }
+
+        case DOWN:
+        {
+            _currentRobotDirection = LEFT;
+            break;
+        }
+        }
+    }
+    else if (savedLocatedCell.up == Maze::UNKNOWN && currentLocaledCell.up == Maze::EMPTY)
+    {
+        addCyclogramToQueue(new Forward(false));
+    }
+    else if (currentLocaledCell.left == Maze::EMPTY)
+    {
+        addCyclogramToQueue(new Rotate90(true));
+
+        switch (_currentRobotDirection)
+        {
+        case UP:
+        {
+            _currentRobotDirection = LEFT;
+            break;
+        }
+
+        case LEFT:
+        {
+            _currentRobotDirection = DOWN;
+            break;
+        }
+
+        case RIGHT:
+        {
+            _currentRobotDirection = UP;
+            break;
+        }
+
+        case DOWN:
+        {
+            _currentRobotDirection = RIGHT;
+            break;
+        }
+        }
+    }
+    else if (currentLocaledCell.right == Maze::EMPTY)
+    {
+        addCyclogramToQueue(new Rotate90(false));
+
+        switch (_currentRobotDirection)
+        {
+        case UP:
+        {
+            _currentRobotDirection = RIGHT;
+            break;
+        }
+
+        case LEFT:
+        {
+            _currentRobotDirection = UP;
+            break;
+        }
+
+        case RIGHT:
+        {
+            _currentRobotDirection = DOWN;
+            break;
+        }
+
+        case DOWN:
+        {
+            _currentRobotDirection = LEFT;
+            break;
+        }
+        }
+    }
+    else if (currentLocaledCell.up == Maze::EMPTY)
+    {
+        addCyclogramToQueue(new Forward(false));
+    }
+    else
+    {
+        addCyclogramToQueue(new Rotate180());
+
+        switch (_currentRobotDirection)
+        {
+        case UP:
+        {
+            _currentRobotDirection = DOWN;
+            break;
+        }
+
+        case LEFT:
+        {
+            _currentRobotDirection = RIGHT;
+            break;
+        }
+
+        case RIGHT:
+        {
+            _currentRobotDirection = LEFT;
+            break;
+        }
+
+        case DOWN:
+        {
+            _currentRobotDirection = UP;
+            break;
+        }
+        }
     }
 
-    if(millis() - _lastCycTime < CYCLOGRAM_DELAY)
-        return;
+    switch (_currentRobotDirection)
+    {
+    case UP:
+    {
+        _currentPos.y--;
+        break;
+    }
 
-    // Serial.print(gRobotState.x);
-    // Serial.print(" ");
-    // Serial.print(gRobotState.y);
-    // Serial.println();
+    case LEFT:
+    {
+        _currentPos.x--;
+        break;
+    }
 
-    Maze::Cell nextCell;
+    case RIGHT:
+    {
+        _currentPos.x++;
+        break;
+    }
 
-    if(isWallForward())
-        nextCell.up = Maze::WALL;
-    else
-        nextCell.up = Maze::EMPTY;
+    case DOWN:
+    {
+        _currentPos.y++;
+        break;
+    }
+    }
 
-    if(isWallLeft())
-        nextCell.left = Maze::WALL;
-    else
-        nextCell.left = Maze::EMPTY;
+    // drawMaze(&_maze, nullptr);
 
-    if(isWallRight())
-        nextCell.right = Maze::WALL;
-    else
-        nextCell.right = Maze::EMPTY;
+    // Maze::Cell rotatedNextCell;
 
-    if(nextCell.left == Maze::EMPTY)
-        runCyclogram(new Rotate90(true));
-    else if(nextCell.up == Maze::EMPTY)
-        runCyclogram(new Forward());
-    else if(nextCell.right == Maze::EMPTY)
-        runCyclogram(new Rotate90(false));
-    else
-        runCyclogram(new Rotate180());
+    // Vec2Int robotPosition(gRobotState.x / CELL_SIZE, gRobotState.y / CELL_SIZE);
 
-    Maze::Cell rotatedNextCell;
-    
-    Vec2Int robotPosition(gRobotState.x / CELL_SIZE, gRobotState.y / CELL_SIZE);
+    // rotatedNextCell = rotateCell(gRobotState.h, nextCell);
 
-    rotatedNextCell = rotateCell(gRobotState.h, nextCell);
+    // if(abs(gRobotState.h) < H_SENS)
+    //     robotPosition.y++;
+    // else if(abs(gRobotState.h - PI * 0.5f) < H_SENS)
+    //     robotPosition.x++;
+    // else if(abs(gRobotState.h - PI) < H_SENS)
+    //     robotPosition.y--;
+    // else
+    //     robotPosition.x--;
 
-    if(abs(gRobotState.h) < H_SENS)
-        robotPosition.y++;
-    else if(abs(gRobotState.h - PI * 0.5f) < H_SENS)
-        robotPosition.x++;
-    else if(abs(gRobotState.h - PI) < H_SENS)
-        robotPosition.y--;
-    else
-        robotPosition.x--;
+    // Maze::Cell mazeCell = _maze.get(robotPosition);
 
-    Maze::Cell mazeCell = _maze.get(robotPosition);
+    // if(rotatedNextCell.up == Maze::UNKNOWN)
+    //     rotatedNextCell.up = mazeCell.up;
 
-    if(rotatedNextCell.up == Maze::UNKNOWN)
-        rotatedNextCell.up = mazeCell.up;
+    // if(rotatedNextCell.down == Maze::UNKNOWN)
+    //     rotatedNextCell.down = mazeCell.down;
 
-    if(rotatedNextCell.down == Maze::UNKNOWN)
-        rotatedNextCell.down = mazeCell.down;
-        
-    if(rotatedNextCell.left == Maze::UNKNOWN)
-        rotatedNextCell.left = mazeCell.left;
-    
-    if(rotatedNextCell.right == Maze::UNKNOWN)
-        rotatedNextCell.right = mazeCell.right;
+    // if(rotatedNextCell.left == Maze::UNKNOWN)
+    //     rotatedNextCell.left = mazeCell.left;
 
-    _maze.set(rotatedNextCell, robotPosition);
+    // if(rotatedNextCell.right == Maze::UNKNOWN)
+    //     rotatedNextCell.right = mazeCell.right;
+
+    // _maze.set(rotatedNextCell, robotPosition);
 }

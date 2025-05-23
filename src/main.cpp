@@ -41,10 +41,10 @@ void setup()
   mazeExplorerInit();
   odometryInit();
 
-
-  addCyclogramToQueue(new Forward(true));
-  //addCyclogramToQueue(new Rotate90(true));
-  //addCyclogramToQueue(new Rotate180());
+  addCyclogramToQueue(new Start());
+  // addCyclogramToQueue(new Rotate90(true));
+  // addCyclogramToQueue(new Rotate180());
+  // addCyclogramToQueue(new Forward(false));
 }
 
 void loop()
@@ -65,12 +65,21 @@ void loop()
   cyclogramsTick();
 
   // Serial.print("Left Front: ");
-  //  Serial.print(gDistanceFrontLeft);
-  //  Serial.print("  Right Front: ");
-  //  Serial.print(gDistanceFrontRight);
+  // Serial.print(gDistanceFrontLeft);
+  // Serial.print("  Right Front: ");
+  // Serial.print(gDistanceFrontRight);
   // Serial.print("  Left diagonal: ");
-  // Serial.println(gDistanceDiagonalLeft);
+  // Serial.print(gDistanceDiagonalLeft);
   // Serial.print("  Right diagonal: ");
   // Serial.print(gDistanceDiagonalRight);
-  //  Serial.println();
+  // Serial.println();
+
+  // Serial.println(gVoltmeterVolts);
+
+  // Serial.print("  forward = ");
+  // Serial.print(isWallForward());
+  // Serial.print("  left = ");
+  // Serial.print(isWallLeft());
+  // Serial.print("  right = ");
+  // Serial.println(isWallRight());
 }
