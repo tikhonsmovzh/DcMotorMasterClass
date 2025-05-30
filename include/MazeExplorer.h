@@ -21,15 +21,25 @@ enum Direction
     RIGHT
 };
 
-void mazeExplorerInit()
-{
-    _maze.set(Maze::Cell(Maze::EMPTY, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
-}
-
 Vec2Int _currentRobotPos(0, 1);
 Direction _currentRobotDirection = DOWN;
 
-Maze::Cell rotateCell(Maze::Cell cell, Direction dir){
+void mazeExplorerInit()
+{
+    _maze.set(Maze::Cell(Maze::EMPTY, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
+
+    randomSeed(analogRead(0));
+
+    if(gCurrentFunction == 8){
+        _currentRobotPos.x = 1;
+        _currentRobotPos.y = 0;
+
+        _currentRobotDirection = RIGHT;
+    }
+}
+
+Maze::Cell rotateCell(Maze::Cell cell, Direction dir)
+{
     switch (dir)
     {
     case UP:
@@ -183,103 +193,124 @@ void moveToRevers()
     }
 }
 
+bool isRunToBase = false;
+
 void mazeExplorerTick()
 {
     if (!isCyclogramsEmpty())
         return;
 
-    if(!isWallLeft())
-        runCyclogram(Rotate90Left);
-    else if(!isWallForward())
-        runCyclogram(Forward);
-    else if(!isWallRight())
-        runCyclogram(Rotate90Right);
+    if (!isRunToBase)
+    {
+        int leftOrRight = random(0, 2);
+
+        if (leftOrRight == 0)
+        {
+            if (!isWallLeft())
+                moveToLeft();
+            else if (!isWallForward())
+                moveToForward();
+            else if (!isWallRight())
+                moveToRight();
+            else
+                moveToRevers();
+        }
+        else
+        {
+            if (!isWallRight())
+                moveToRight();
+            else if (!isWallForward())
+                moveToForward();
+            else if (!isWallLeft())
+                moveToLeft();
+            else
+                moveToRevers();
+        }
+
+        Maze::Cell currentCell = rotateCell(_maze.get(_currentRobotPos), _currentRobotDirection);
+
+        if (isWallForward())
+            currentCell.up = Maze::WALL;
+        else
+            currentCell.up = Maze::EMPTY;
+
+        if (isWallLeft())
+            currentCell.left = Maze::WALL;
+        else
+            currentCell.left = Maze::EMPTY;
+
+        if (isWallRight())
+            currentCell.right = Maze::WALL;
+        else
+            currentCell.right = Maze::EMPTY;
+
+        _maze.set(rotateCell(currentCell, _currentRobotDirection), _currentRobotPos);
+
+        if (_currentRobotPos.x == CELL_END_X && _currentRobotPos.y == CELL_END_Y)
+        {
+            runCyclogram(Rotate180OnPlace);
+
+            _solver.findPath(Vec2Int(0, 0), _currentRobotPos, &_maze);
+
+            isRunToBase = true;
+        }
+    }
     else
-        runCyclogram(Rotate180);
+    {
+        MazeSolver::CellState state = _solver.getCellState(_currentRobotPos);
 
-    // Maze::Cell currentCell = rotateCell(_maze.get(_currentRobotPos), _currentRobotDirection);
+        if (state == MazeSolver::END)
+            return;
 
-    // if (isWallForward())
-    //     currentCell.up = Maze::WALL;
-    // else
-    //     currentCell.up = Maze::EMPTY;
+        switch (_currentRobotDirection)
+        {
+        case UP:
+            if (state == MazeSolver::UP)
+                moveToForward();
+            else if (state == MazeSolver::LEFT)
+                moveToLeft();
+            else if (state == MazeSolver::RIGHT)
+                moveToRight();
+            else
+                moveToRevers();
 
-    // if (isWallLeft())
-    //     currentCell.left = Maze::WALL;
-    // else
-    //     currentCell.left = Maze::EMPTY;
+            break;
 
-    // if (isWallRight())
-    //     currentCell.right = Maze::WALL;
-    // else
-    //     currentCell.right = Maze::EMPTY;
+        case LEFT:
+            if (state == MazeSolver::UP)
+                moveToRight();
+            else if (state == MazeSolver::LEFT)
+                moveToForward();
+            else if (state == MazeSolver::DOWN)
+                moveToLeft();
+            else
+                moveToRevers();
 
-    // _maze.set(rotateCell(currentCell, _currentRobotDirection), _currentRobotPos);
+            break;
 
-    // _solver.findPath(_currentRobotPos, Vec2Int(CELL_END_X, CELL_END_Y), &_maze);
+        case RIGHT:
+            if (state == MazeSolver::UP)
+                moveToLeft();
+            else if (state == MazeSolver::RIGHT)
+                moveToForward();
+            else if (state == MazeSolver::DOWN)
+                moveToRight();
+            else
+                moveToRevers();
 
-    // MazeSolver::CellState state = _solver.getCellState(_currentRobotPos);
+            break;
 
-    // switch (_currentRobotDirection)
-    // {
-    // case UP:
-    //     if (state == MazeSolver::UP)
-    //         moveToForward();
-    //     else if (state == MazeSolver::LEFT)
-    //         moveToLeft();
-    //     else if (state == MazeSolver::RIGHT)
-    //         moveToRight();
-    //     else
-    //         moveToRevers();
+        case DOWN:
+            if (state == MazeSolver::LEFT)
+                moveToRight();
+            else if (state == MazeSolver::DOWN)
+                moveToForward();
+            else if (state == MazeSolver::RIGHT)
+                moveToLeft();
+            else
+                moveToRevers();
 
-    //     break;
-
-    // case LEFT:
-    //     if (state == MazeSolver::UP)
-    //         moveToRight();
-    //     else if (state == MazeSolver::LEFT)
-    //         moveToForward();
-    //     else if (state == MazeSolver::DOWN)
-    //         moveToLeft();
-    //     else
-    //         moveToRevers();
-
-    //     break;
-
-    // case RIGHT:
-    //     static int counter = 0;
-
-    //     counter++;
-
-    //     if(counter > 3){
-    //                     setLeftU(0.0f);
-    //         setRightU(0.0f);
-    //         drawMaze(&_maze, &_solver);
-
-    //         delay(999999);
-    //     }
-
-    //     if (state == MazeSolver::UP)
-    //         moveToLeft();
-    //     else if (state == MazeSolver::RIGHT)
-    //         moveToForward();
-    //     else if (state == MazeSolver::DOWN)
-    //         moveToRight();
-    //     else
-    //         moveToRevers();
-
-    //     break;
-
-    // case DOWN:
-    //     if (state == MazeSolver::LEFT)
-    //         moveToRight();
-    //     else if (state == MazeSolver::DOWN)
-    //         moveToForward();
-    //     else if (state == MazeSolver::RIGHT)
-    //         moveToLeft();
-    //     else
-    //         moveToRevers();
-
-    //     break;
-    // }
+            break;
+        }
+    }
 }

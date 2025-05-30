@@ -154,6 +154,19 @@ void Rotate90Right(Sensor *sensor, MotorState *motorState)
         motorState->isComplited = true;
 }
 
+void Rotate180OnPlace(Sensor *sensor, MotorState *motorState)
+{
+    if (sensor->time < PI / ROTATE_VEL * ROTATE180_COLLIBREATE_K)
+    {
+        motorState->headingVelocity = ROTATE_VEL;
+        motorState->forwardVel = 0.0;
+
+        motorState->isComplited = false;
+    }
+    else
+        motorState->isComplited = true;
+}
+
 Vector<void (*)(Sensor *, MotorState *)> _cyclograms;
 float _lastCyclogramTime = 0.0;
 

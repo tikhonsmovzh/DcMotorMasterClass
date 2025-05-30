@@ -34,6 +34,8 @@ void setup()
   
   digitalWrite(ADDITION_LED_PIN, 1);
 
+  functionTick();
+
   encsInit();
   voltInit();
   cyclogramsInit();
