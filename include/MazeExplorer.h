@@ -77,7 +77,7 @@ Maze::Cell rotateCell(Maze::Cell cell, Direction dir){
 
 void moveToForward()
 {
-    runCyclogram(new Forward());
+    runCyclogram(Forward);
 
     switch (_currentRobotDirection)
     {
@@ -101,7 +101,7 @@ void moveToForward()
 
 void moveToLeft()
 {
-    runCyclogram(new Rotate90(true));
+    runCyclogram(Rotate90Left);
 
     switch (_currentRobotDirection)
     {
@@ -129,7 +129,7 @@ void moveToLeft()
 
 void moveToRight()
 {
-    runCyclogram(new Rotate90(false));
+    runCyclogram(Rotate90Right);
 
     switch (_currentRobotDirection)
     {
@@ -157,7 +157,7 @@ void moveToRight()
 
 void moveToRevers()
 {
-    runCyclogram(new Rotate180());
+    runCyclogram(Rotate180);
 
     switch (_currentRobotDirection)
     {
@@ -189,13 +189,13 @@ void mazeExplorerTick()
         return;
 
     if(!isWallLeft())
-        runCyclogram(new Rotate90(true));
+        runCyclogram(Rotate90Left);
     else if(!isWallForward())
-        runCyclogram(new Forward());
+        runCyclogram(Forward);
     else if(!isWallRight())
-        runCyclogram(new Rotate90(false));
+        runCyclogram(Rotate90Right);
     else
-        runCyclogram(new Rotate180());
+        runCyclogram(Rotate180);
 
     // Maze::Cell currentCell = rotateCell(_maze.get(_currentRobotPos), _currentRobotDirection);
 

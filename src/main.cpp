@@ -41,10 +41,7 @@ void setup()
   mazeExplorerInit();
   odometryInit();
 
-  addCyclogramToQueue(new Start());
-  // addCyclogramToQueue(new Rotate90(true));
-  // addCyclogramToQueue(new Rotate180());
-  // addCyclogramToQueue(new Forward(false));
+  addCyclogramToQueue(Start);
 }
 
 void loop()
