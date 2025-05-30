@@ -26,11 +26,10 @@ void mazeExplorerInit()
     _maze.set(Maze::Cell(Maze::EMPTY, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
 }
 
-Vec2Int _currentPos(0, 1);
+Vec2Int _currentRobotPos(0, 1);
 Direction _currentRobotDirection = DOWN;
 
-Maze::Cell cellToLocal(Maze::Cell cell, Direction dir)
-{
+Maze::Cell rotateCell(Maze::Cell cell, Direction dir){
     switch (dir)
     {
     case UP:
@@ -72,6 +71,116 @@ Maze::Cell cellToLocal(Maze::Cell cell, Direction dir)
         return resultCell;
     }
     }
+
+    return cell;
+}
+
+void moveToForward()
+{
+    runCyclogram(new Forward());
+
+    switch (_currentRobotDirection)
+    {
+    case UP:
+        _currentRobotPos.y--;
+        break;
+
+    case DOWN:
+        _currentRobotPos.y++;
+        break;
+
+    case LEFT:
+        _currentRobotPos.x--;
+        break;
+
+    case RIGHT:
+        _currentRobotPos.x++;
+        break;
+    }
+}
+
+void moveToLeft()
+{
+    runCyclogram(new Rotate90(true));
+
+    switch (_currentRobotDirection)
+    {
+    case UP:
+        _currentRobotPos.x--;
+        _currentRobotDirection = LEFT;
+        break;
+
+    case DOWN:
+        _currentRobotPos.x++;
+        _currentRobotDirection = RIGHT;
+        break;
+
+    case LEFT:
+        _currentRobotPos.y++;
+        _currentRobotDirection = DOWN;
+        break;
+
+    case RIGHT:
+        _currentRobotPos.y--;
+        _currentRobotDirection = UP;
+        break;
+    }
+}
+
+void moveToRight()
+{
+    runCyclogram(new Rotate90(false));
+
+    switch (_currentRobotDirection)
+    {
+    case UP:
+        _currentRobotPos.x++;
+        _currentRobotDirection = RIGHT;
+        break;
+
+    case DOWN:
+        _currentRobotPos.x--;
+        _currentRobotDirection = LEFT;
+        break;
+
+    case LEFT:
+        _currentRobotPos.y--;
+        _currentRobotDirection = UP;
+        break;
+
+    case RIGHT:
+        _currentRobotPos.y++;
+        _currentRobotDirection = DOWN;
+        break;
+    }
+}
+
+void moveToRevers()
+{
+    runCyclogram(new Rotate180());
+
+    switch (_currentRobotDirection)
+    {
+    case UP:
+        _currentRobotPos.y++;
+        _currentRobotDirection = DOWN;
+        break;
+
+    case DOWN:
+        _currentRobotPos.y--;
+        _currentRobotDirection = UP;
+        break;
+
+    case LEFT:
+        _currentRobotPos.x--;
+        _currentRobotDirection = RIGHT;
+        break;
+
+    case RIGHT:
+        _currentRobotPos.x++;
+        _currentRobotDirection = LEFT;
+        break;
+    }
 }
 
 void mazeExplorerTick()
@@ -79,242 +188,98 @@ void mazeExplorerTick()
     if (!isCyclogramsEmpty())
         return;
 
-    Maze::Cell currentCell = _maze.get(_currentPos);
-
-    Maze::Cell currentLocaledCell = cellToLocal(currentCell, _currentRobotDirection);
-
-    Maze::Cell savedLocatedCell = currentLocaledCell;
-
-    if (currentLocaledCell.left == Maze::UNKNOWN)
-        currentLocaledCell.left = isWallLeft() ? Maze::WALL : Maze::EMPTY;
-    if (currentLocaledCell.right == Maze::UNKNOWN)
-        currentLocaledCell.right = isWallRight() ? Maze::WALL : Maze::EMPTY;
-    if (currentLocaledCell.up == Maze::UNKNOWN)
-        currentLocaledCell.up = isWallForward() ? Maze::WALL : Maze::EMPTY;
-
-    _maze.set(cellToLocal(currentLocaledCell, _currentRobotDirection), _currentPos);
-
-    if (savedLocatedCell.left == Maze::UNKNOWN && currentLocaledCell.left == Maze::EMPTY)
-    {
-        addCyclogramToQueue(new Rotate90(true));
-
-        switch (_currentRobotDirection)
-        {
-        case UP:
-        {
-            _currentRobotDirection = LEFT;
-            break;
-        }
-
-        case LEFT:
-        {
-            _currentRobotDirection = DOWN;
-            break;
-        }
-
-        case RIGHT:
-        {
-            _currentRobotDirection = UP;
-            break;
-        }
-
-        case DOWN:
-        {
-            _currentRobotDirection = RIGHT;
-            break;
-        }
-        }
-    }
-    else if (savedLocatedCell.right == Maze::UNKNOWN && currentLocaledCell.right == Maze::EMPTY)
-    {
-        addCyclogramToQueue(new Rotate90(false));
-
-        switch (_currentRobotDirection)
-        {
-        case UP:
-        {
-            _currentRobotDirection = RIGHT;
-            break;
-        }
-
-        case LEFT:
-        {
-            _currentRobotDirection = UP;
-            break;
-        }
-
-        case RIGHT:
-        {
-            _currentRobotDirection = DOWN;
-            break;
-        }
-
-        case DOWN:
-        {
-            _currentRobotDirection = LEFT;
-            break;
-        }
-        }
-    }
-    else if (savedLocatedCell.up == Maze::UNKNOWN && currentLocaledCell.up == Maze::EMPTY)
-    {
-        addCyclogramToQueue(new Forward(false));
-    }
-    else if (currentLocaledCell.left == Maze::EMPTY)
-    {
-        addCyclogramToQueue(new Rotate90(true));
-
-        switch (_currentRobotDirection)
-        {
-        case UP:
-        {
-            _currentRobotDirection = LEFT;
-            break;
-        }
-
-        case LEFT:
-        {
-            _currentRobotDirection = DOWN;
-            break;
-        }
-
-        case RIGHT:
-        {
-            _currentRobotDirection = UP;
-            break;
-        }
-
-        case DOWN:
-        {
-            _currentRobotDirection = RIGHT;
-            break;
-        }
-        }
-    }
-    else if (currentLocaledCell.right == Maze::EMPTY)
-    {
-        addCyclogramToQueue(new Rotate90(false));
-
-        switch (_currentRobotDirection)
-        {
-        case UP:
-        {
-            _currentRobotDirection = RIGHT;
-            break;
-        }
-
-        case LEFT:
-        {
-            _currentRobotDirection = UP;
-            break;
-        }
-
-        case RIGHT:
-        {
-            _currentRobotDirection = DOWN;
-            break;
-        }
-
-        case DOWN:
-        {
-            _currentRobotDirection = LEFT;
-            break;
-        }
-        }
-    }
-    else if (currentLocaledCell.up == Maze::EMPTY)
-    {
-        addCyclogramToQueue(new Forward(false));
-    }
+    if(!isWallLeft())
+        runCyclogram(new Rotate90(true));
+    else if(!isWallForward())
+        runCyclogram(new Forward());
+    else if(!isWallRight())
+        runCyclogram(new Rotate90(false));
     else
-    {
-        addCyclogramToQueue(new Rotate180());
+        runCyclogram(new Rotate180());
 
-        switch (_currentRobotDirection)
-        {
-        case UP:
-        {
-            _currentRobotDirection = DOWN;
-            break;
-        }
+    // Maze::Cell currentCell = rotateCell(_maze.get(_currentRobotPos), _currentRobotDirection);
 
-        case LEFT:
-        {
-            _currentRobotDirection = RIGHT;
-            break;
-        }
-
-        case RIGHT:
-        {
-            _currentRobotDirection = LEFT;
-            break;
-        }
-
-        case DOWN:
-        {
-            _currentRobotDirection = UP;
-            break;
-        }
-        }
-    }
-
-    switch (_currentRobotDirection)
-    {
-    case UP:
-    {
-        _currentPos.y--;
-        break;
-    }
-
-    case LEFT:
-    {
-        _currentPos.x--;
-        break;
-    }
-
-    case RIGHT:
-    {
-        _currentPos.x++;
-        break;
-    }
-
-    case DOWN:
-    {
-        _currentPos.y++;
-        break;
-    }
-    }
-
-    // drawMaze(&_maze, nullptr);
-
-    // Maze::Cell rotatedNextCell;
-
-    // Vec2Int robotPosition(gRobotState.x / CELL_SIZE, gRobotState.y / CELL_SIZE);
-
-    // rotatedNextCell = rotateCell(gRobotState.h, nextCell);
-
-    // if(abs(gRobotState.h) < H_SENS)
-    //     robotPosition.y++;
-    // else if(abs(gRobotState.h - PI * 0.5f) < H_SENS)
-    //     robotPosition.x++;
-    // else if(abs(gRobotState.h - PI) < H_SENS)
-    //     robotPosition.y--;
+    // if (isWallForward())
+    //     currentCell.up = Maze::WALL;
     // else
-    //     robotPosition.x--;
+    //     currentCell.up = Maze::EMPTY;
 
-    // Maze::Cell mazeCell = _maze.get(robotPosition);
+    // if (isWallLeft())
+    //     currentCell.left = Maze::WALL;
+    // else
+    //     currentCell.left = Maze::EMPTY;
 
-    // if(rotatedNextCell.up == Maze::UNKNOWN)
-    //     rotatedNextCell.up = mazeCell.up;
+    // if (isWallRight())
+    //     currentCell.right = Maze::WALL;
+    // else
+    //     currentCell.right = Maze::EMPTY;
 
-    // if(rotatedNextCell.down == Maze::UNKNOWN)
-    //     rotatedNextCell.down = mazeCell.down;
+    // _maze.set(rotateCell(currentCell, _currentRobotDirection), _currentRobotPos);
 
-    // if(rotatedNextCell.left == Maze::UNKNOWN)
-    //     rotatedNextCell.left = mazeCell.left;
+    // _solver.findPath(_currentRobotPos, Vec2Int(CELL_END_X, CELL_END_Y), &_maze);
 
-    // if(rotatedNextCell.right == Maze::UNKNOWN)
-    //     rotatedNextCell.right = mazeCell.right;
+    // MazeSolver::CellState state = _solver.getCellState(_currentRobotPos);
 
-    // _maze.set(rotatedNextCell, robotPosition);
+    // switch (_currentRobotDirection)
+    // {
+    // case UP:
+    //     if (state == MazeSolver::UP)
+    //         moveToForward();
+    //     else if (state == MazeSolver::LEFT)
+    //         moveToLeft();
+    //     else if (state == MazeSolver::RIGHT)
+    //         moveToRight();
+    //     else
+    //         moveToRevers();
+
+    //     break;
+
+    // case LEFT:
+    //     if (state == MazeSolver::UP)
+    //         moveToRight();
+    //     else if (state == MazeSolver::LEFT)
+    //         moveToForward();
+    //     else if (state == MazeSolver::DOWN)
+    //         moveToLeft();
+    //     else
+    //         moveToRevers();
+
+    //     break;
+
+    // case RIGHT:
+    //     static int counter = 0;
+
+    //     counter++;
+
+    //     if(counter > 3){
+    //                     setLeftU(0.0f);
+    //         setRightU(0.0f);
+    //         drawMaze(&_maze, &_solver);
+
+    //         delay(999999);
+    //     }
+
+    //     if (state == MazeSolver::UP)
+    //         moveToLeft();
+    //     else if (state == MazeSolver::RIGHT)
+    //         moveToForward();
+    //     else if (state == MazeSolver::DOWN)
+    //         moveToRight();
+    //     else
+    //         moveToRevers();
+
+    //     break;
+
+    // case DOWN:
+    //     if (state == MazeSolver::LEFT)
+    //         moveToRight();
+    //     else if (state == MazeSolver::DOWN)
+    //         moveToForward();
+    //     else if (state == MazeSolver::RIGHT)
+    //         moveToLeft();
+    //     else
+    //         moveToRevers();
+
+    //     break;
+    // }
 }
