@@ -34,6 +34,9 @@ void setRightU(float powerU){
     analogWrite(RIGHT_MOTOR_PWM_PIN, abs(pwm));
 }
 
+PIRegulator _leftRegulator(MOTOR_K_P, MOTOR_K_I, 0.0f);
+PIRegulator _rightRegulator(MOTOR_K_P, MOTOR_K_I, 0.0f);
+
 void motorInit(){
     pinMode(LEFT_MOTOR_DIR_PIN, OUTPUT);
     pinMode(LEFT_MOTOR_PWM_PIN, OUTPUT);
@@ -42,13 +45,13 @@ void motorInit(){
     pinMode(RIGHT_MOTOR_PWM_PIN, OUTPUT);
 }
 
-PIRegulator _leftRegulator(MOTOR_K_P, MOTOR_K_I, MAX_MOTOR_U);
-PIRegulator _rightRegulator(MOTOR_K_P, MOTOR_K_I, MAX_MOTOR_U);
-
 float gTargetLeftW = 0.0;
 float gTargetRightW = 0.0;
 
 void motorTick(){
+    _leftRegulator.setMaxU(gVoltmeterVolts - BATTERY_WINDOW);
+    _rightRegulator.setMaxU(gVoltmeterVolts - BATTERY_WINDOW);
+
     const float currentLeftW = gLeftW;
     const float currentRightW = gRightW;
 

@@ -28,7 +28,15 @@ void callibrateRot(Sensor *sensor, MotorState *motorState)
 
     if (!leftWall)
     {
-        motorState->headingVelocity = 0.0;
+        if(!isWallRight())
+            return;
+
+        int16_t err = -TARGET_FORWARD_DISTANCE_RIGHT + sensor->distanceDiagonalRight;
+
+        float u = err * FORWARD_CYCLOGRAM_P;
+
+        motorState->headingVelocity = u;
+
         return;
     }
 
@@ -95,14 +103,14 @@ void Start(Sensor *sensor, MotorState *motorState)
 {
     float forwardTime = (CELL_SIZE - ROBOT_WHHEL_DIF) / FORWARD_VEL;
 
-    if (sensor->time < forwardTime)
+    if (sensor->time < forwardTime + 0.4f)
     {
         motorState->forwardVel = -FORWARD_VEL;
         motorState->headingVelocity = 0.0f;
 
         callibrateRot(sensor, motorState);
     }
-    else if (sensor->time < forwardTime * 2)
+    else if (sensor->time < forwardTime * 2.03f + 0.4f)
     {
         motorState->forwardVel = FORWARD_VEL;
         motorState->headingVelocity = 0.0f;
@@ -132,6 +140,7 @@ void Rotate90Left(Sensor *sensor, MotorState *motorState)
     if (rotTime * ROTATE_COLLIBREATE_K > sensor->time)
     {
         motorState->headingVelocity = headingVel;
+        motorState->isComplited = false;
     }
     else
         motorState->isComplited = true;
@@ -149,6 +158,60 @@ void Rotate90Right(Sensor *sensor, MotorState *motorState)
     if (rotTime * ROTATE_COLLIBREATE_K > sensor->time)
     {
         motorState->headingVelocity = headingVel;
+        motorState->isComplited = false;
+    }
+    else
+        motorState->isComplited = true;
+}
+
+void Rotate90RightFix(Sensor *sensor, MotorState *motorState){
+    const float radius = (CELL_SIZE * 0.29f);
+
+    const float headingVel = -1.0 * (FORWARD_VEL / radius);
+    motorState->forwardVel = FORWARD_VEL;
+
+    const float rotTime = (2.0f * PI * radius) / FORWARD_VEL * 0.25;
+
+    const float forwardTime = CELL_SIZE * 0.21f / FORWARD_VEL;
+
+    if(forwardTime > sensor->time){
+        callibrateRot(sensor, motorState);
+        motorState->isComplited = false;
+    }
+    else if (rotTime * ROTATE_COLLIBREATE_K + forwardTime > sensor->time)
+    {
+        motorState->headingVelocity = headingVel;
+        motorState->isComplited = false;
+    }
+    else if(rotTime * ROTATE_COLLIBREATE_K + 2.0f * forwardTime > sensor->time){
+        callibrateRot(sensor, motorState);
+        motorState->isComplited = false;
+    }
+    else
+        motorState->isComplited = true;
+}
+
+void Rotate90LeftFix(Sensor *sensor, MotorState *motorState){
+    const float radius = (CELL_SIZE * 0.29f);
+
+    const float headingVel = (FORWARD_VEL / radius);
+    motorState->forwardVel = FORWARD_VEL;
+
+    const float rotTime = (2.0f * PI * radius) / FORWARD_VEL * 0.25;
+
+    const float forwardTime = CELL_SIZE * 0.21f / FORWARD_VEL;
+
+    if(forwardTime > sensor->time){
+        callibrateRot(sensor, motorState);
+        motorState->isComplited = false;
+    }
+    else if (rotTime * ROTATE_COLLIBREATE_K + forwardTime > sensor->time)
+    {
+        motorState->headingVelocity = headingVel;
+    }
+    else if(rotTime * ROTATE_COLLIBREATE_K + 2.0f * forwardTime > sensor->time){
+        callibrateRot(sensor, motorState);
+        motorState->isComplited = false;
     }
     else
         motorState->isComplited = true;

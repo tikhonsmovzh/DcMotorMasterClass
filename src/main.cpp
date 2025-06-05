@@ -13,37 +13,16 @@
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
-  pinMode(ADDITION_LED_PIN, OUTPUT);
-
-  digitalWrite(ADDITION_LED_PIN, 0);
-
-  motorInit();
   functionInit();
-
-  setLeftU(0.0f);
-  setRightU(0.0f);
-
-  do{
-    functionTick();
-  }
-  while (gCurrentFunction != 16);
-
-  delay(1000);
-  
-  digitalWrite(ADDITION_LED_PIN, 1);
-
-  functionTick();
-
-  encsInit();
   voltInit();
+  encsInit();
   cyclogramsInit();
   distanceSensorsInit();
   mazeExplorerInit();
   odometryInit();
-
-  addCyclogramToQueue(Start);
+  motorInit();
 }
 
 void loop()

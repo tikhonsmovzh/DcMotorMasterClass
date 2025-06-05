@@ -25,4 +25,8 @@ public:
 
         return u;
     }
+
+    void setMaxU(float maxU){
+        _maxU = maxU;
+    }
 };
