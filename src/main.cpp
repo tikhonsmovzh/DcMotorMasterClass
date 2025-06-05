@@ -15,6 +15,8 @@ void setup()
 {
   Serial.begin(115200);
 
+  delay(1000);
+
   functionInit();
   voltInit();
   encsInit();
@@ -39,7 +41,7 @@ void loop()
   motorTick();
   distanceSensorsTick();
 
-  mazeExplorerTick();
+  // mazeExplorerTick();
   cyclogramsTick();
 
   // Serial.print("Left Front: ");

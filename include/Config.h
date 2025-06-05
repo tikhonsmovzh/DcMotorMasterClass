@@ -72,6 +72,8 @@
 #define ROBOT_WHHEL_DIF 0.045f
 
 #define ROTATE180_ADED_DIST 0.05f
+
+#define ROTATE_45_FORWARD_DIST (CELL_SIZE * 0.4f)
   
 //Maze
 #define MAZE_SIZE_X 5
