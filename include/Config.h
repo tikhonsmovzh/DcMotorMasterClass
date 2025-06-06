@@ -41,7 +41,7 @@
 #define RIGHT_MOTOR_DIR_PIN 8 
 #define RIGHT_MOTOR_PWM_PIN 10
 
-#define USB_MOTOR_POWER 4.5
+#define USB_MOTOR_POWER 6.0
 
 //velocity regulators
 #define BATTERY_WINDOW 0.5f
@@ -74,6 +74,7 @@
 #define ROTATE180_ADED_DIST 0.05f
 
 #define ROTATE_45_FORWARD_DIST (CELL_SIZE * 0.4f)
+#define ROTATE_45_FIRST_FORWARD_K 1.0f
   
 //Maze
 #define MAZE_SIZE_X 5

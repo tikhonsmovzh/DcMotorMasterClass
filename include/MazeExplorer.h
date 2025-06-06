@@ -11,8 +11,8 @@
 #include "Odometry.h"
 #include "ElapsedTime.h"
 
-Maze _maze = Maze();
-MazeSolver _solver = MazeSolver();
+Maze gMaze = Maze();
+MazeSolver gSolver = MazeSolver();
 
 enum Direction
 {
@@ -36,9 +36,11 @@ Direction _currentRobotDirection = DOWN;
 int fixCounter = 0;
 ElapseTime _startTimer;
 
-RunState _currentRunState = WAIT;
+RunState gCurrentRunState = WAIT;
 
 Vec2Int _endPoint(CELL_END_X, CELL_END_Y);
+
+bool _isExplorored = false;
 
 void resetState()
 {
@@ -49,7 +51,7 @@ void resetState()
 
         _currentRobotDirection = RIGHT;
 
-        _maze.set(Maze::Cell(Maze::WALL, Maze::EMPTY, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
+        gMaze.set(Maze::Cell(Maze::WALL, Maze::EMPTY, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
     }
     else
     {
@@ -58,7 +60,7 @@ void resetState()
 
         _currentRobotDirection = DOWN;
 
-        _maze.set(Maze::Cell(Maze::EMPTY, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
+        gMaze.set(Maze::Cell(Maze::EMPTY, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
     }
 
     _endPoint.x = CELL_END_X;
@@ -202,7 +204,7 @@ void moveToLeft()
 
     if (fixCounter % 4 == 0)
     {
-        Maze::Cell currentCell = cellToLocal(_maze.get(_currentRobotPos), _currentRobotDirection);
+        Maze::Cell currentCell = cellToLocal(gMaze.get(_currentRobotPos), _currentRobotDirection);
 
         if (currentCell.right == Maze::WALL)
             addCyclogramToQueue(Start);
@@ -243,7 +245,7 @@ void moveToRight()
 
     if (fixCounter % 4 == 0)
     {
-        Maze::Cell currentCell = cellToLocal(_maze.get(_currentRobotPos), _currentRobotDirection);
+        Maze::Cell currentCell = cellToLocal(gMaze.get(_currentRobotPos), _currentRobotDirection);
 
         if (currentCell.left == Maze::WALL)
             addCyclogramToQueue(Start);
@@ -303,9 +305,14 @@ void moveToRevers()
     }
 }
 
+void findFastPath();
+
 void mazeExplorerTick()
 {
-    if (_currentRunState == WAIT)
+    if (gCurrentRunState == FAST_RUN)
+        return;
+
+    if (gCurrentRunState == WAIT)
     {
         static bool isStartButtonPresed = false;
 
@@ -321,7 +328,13 @@ void mazeExplorerTick()
         {
             isStartButtonPresed = false;
 
-            _currentRunState = FAST_RUN;
+            if (_isExplorored){
+                gCurrentRunState = FAST_RUN;
+
+                findFastPath();
+            }
+            else
+                gCurrentRunState = SERCH_FINISH;
 
             resetState();
         }
@@ -332,7 +345,7 @@ void mazeExplorerTick()
     if (!isCyclogramsEmpty())
         return;
 
-    Maze::Cell currentCell = cellToLocal(_maze.get(_currentRobotPos), _currentRobotDirection);
+    Maze::Cell currentCell = cellToLocal(gMaze.get(_currentRobotPos), _currentRobotDirection);
 
     if (isWallForward())
         currentCell.up = Maze::WALL;
@@ -349,7 +362,7 @@ void mazeExplorerTick()
     else
         currentCell.right = Maze::EMPTY;
 
-    _maze.set(cellToGlobal(currentCell, _currentRobotDirection), _currentRobotPos);
+    gMaze.set(cellToGlobal(currentCell, _currentRobotDirection), _currentRobotPos);
 
     // setLeftU(0.0f);
     // setRightU(0.0f);
@@ -360,20 +373,22 @@ void mazeExplorerTick()
     // Serial.print(" ");
     // Serial.println(_currentRobotPos.y);
 
-    _solver.findPath(_currentRobotPos, _endPoint, &_maze);
+    gSolver.findPath(_currentRobotPos, _endPoint, &gMaze);
 
-    MazeSolver::CellState state = _solver.getCellState(_currentRobotPos);
+    MazeSolver::CellState state = gSolver.getCellState(_currentRobotPos);
 
     if (state == MazeSolver::END || state == MazeSolver::UKNNOWN)
     {
-        if (_currentRunState == SERCH_FINISH || _currentRunState == FAST_RUN)
+        if (gCurrentRunState == SERCH_FINISH || gCurrentRunState == FAST_RUN)
         {
             _endPoint.x = 0;
             _endPoint.y = 0;
-            _currentRunState = SERCH_END;
+            gCurrentRunState = SERCH_END;
+
+            _isExplorored = true;
         }
-        else if (_currentRunState == SERCH_END)
-            _currentRunState = WAIT;
+        else if (gCurrentRunState == SERCH_END)
+            gCurrentRunState = WAIT;
 
         return;
     }

@@ -36,43 +36,41 @@ ElapseTime _buttonTimer;
 void functionTick()
 {
   int function = decodeFunction(analogRead(FUNCTION_PIN));
-  
-  for (int i = 0; i < _functionBufferSize - 1; i++)
-    _functionBuffer[i] = _functionBuffer[i + 1];
 
-  _functionBuffer[_functionBufferSize - 1] = function;
+  // for (int i = 0; i < _functionBufferSize - 1; i++)
+  //   _functionBuffer[i] = _functionBuffer[i + 1];
 
-  int min = 16, max = 0;
+  // _functionBuffer[_functionBufferSize - 1] = function;
 
-  for (int i = 0; i < _functionBufferSize; i++)
+  // int min = 16, max = 0;
+
+  // for (int i = 0; i < _functionBufferSize; i++)
+  // {
+  //   if (_functionBuffer[i] < min)
+  //     min = _functionBuffer[i];
+
+  //   if (_functionBuffer[i] > max)
+  //     max = _functionBuffer[i];
+  // }
+
+  // int median = -1;
+
+  // for (int i = 0; i < _functionBufferSize; i++)
+  // {
+  //   if (_functionBuffer[i] != min && _functionBuffer[i] != max)
+  //   {
+  //     median = _functionBuffer[i];
+
+  //     break;
+  //   }
+  // }
+
+  // if (median == -1)
+  //   median = max;
+
+  if (function != 16)
   {
-    if (_functionBuffer[i] < min)
-      min = _functionBuffer[i];
-
-    if (_functionBuffer[i] > max)
-      max = _functionBuffer[i];
-  }
-
-  int median = -1;
-
-  for (int i = 0; i < _functionBufferSize; i++)
-  {
-    if (_functionBuffer[i] != min && _functionBuffer[i] != max)
-    {
-      median = _functionBuffer[i];
-
-      break;
-    }
-  }
-
-  if (median == -1)
-    median = max;
-
-    // Serial.println(median);
-
-  if (median != 16)
-  {
-    gCurrentFunction = median;
+    gCurrentFunction = function;
 
     gStartButtonPresed = false;
     _buttonTimer.reset();

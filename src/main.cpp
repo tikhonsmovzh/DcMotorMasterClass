@@ -10,6 +10,7 @@
 #include "DistanceSensor.h"
 #include "MazeExplorer.h"
 #include "Config.h"
+#include "SmartSolver.h"
 
 void setup()
 {
@@ -25,6 +26,11 @@ void setup()
   mazeExplorerInit();
   odometryInit();
   motorInit();
+
+  addCyclogramToQueue(StartCenter);
+  addCyclogramToQueue(Rotate45Right);
+  // addCyclogramToQueue(Forward45);
+  // addCyclogramToQueue(Rotate45LeftRevers);
 }
 
 void loop()
@@ -40,6 +46,7 @@ void loop()
   voltTick();
   motorTick();
   distanceSensorsTick();
+  smartSolverTick();
 
   // mazeExplorerTick();
   cyclogramsTick();
