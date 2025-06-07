@@ -25,6 +25,8 @@ int x = 1;
 
 void virtualMoveToForward()
 {
+    _optimalTrajectory.push_back(MOVE_FORWARD);
+
     switch (_virtualCurrentDirection)
     {
     case UP:
@@ -47,6 +49,8 @@ void virtualMoveToForward()
 
 void virtualMoveToLeft()
 {
+    _optimalTrajectory.push_back(MOVE_LEFT);
+
     switch (_virtualCurrentDirection)
     {
     case UP:
@@ -73,6 +77,8 @@ void virtualMoveToLeft()
 
 void virtualMoveToRight()
 {
+    _optimalTrajectory.push_back(MOVE_RIGHT);
+
     switch (_virtualCurrentDirection)
     {
     case UP:
@@ -97,32 +103,29 @@ void virtualMoveToRight()
     }
 }
 
-void ORTHO_F();
 void ORTHO_L();
 void ORTHO_R();
+void ORTHO_LL();
+void ORTHO_RR();
+void ORTHO();
+void DIAG_RL();
+void DIAG_LR();
+void DIAG_RR();
+void DIAG_LL();
 
 void findFastPath()
 {
+    _virtualCurrentPos.x = 0;
+    _virtualCurrentPos.y = 0;
+
     if (gCurrentFunction == 8)
-    {
-        _virtualCurrentPos.x = 1;
-        _virtualCurrentPos.y = 0;
-
         _virtualCurrentDirection = RIGHT;
-    }
     else
-    {
-        _virtualCurrentPos.x = 0;
-        _virtualCurrentPos.y = 1;
-
         _virtualCurrentDirection = DOWN;
-    }
 
     gSolver.findPath(_virtualCurrentPos, Vec2Int(CELL_END_X, CELL_END_Y), &gMaze);
 
     _optimalTrajectory.clear();
-
-    _optimalTrajectory.push_back(MOVE_FORWARD);
 
     MazeSolver::CellState state;
 
@@ -172,30 +175,36 @@ void findFastPath()
 
             break;
         }
-    } while (state == MazeSolver::END || state == MazeSolver::UKNNOWN);
+    } while (state != MazeSolver::END && state != MazeSolver::UKNNOWN);
+
+    addCyclogramToQueue(StartCenter);
+
+    Serial.println(_optimalTrajectory.size());
+
+    for(int i = 0; i < _optimalTrajectory.size(); i++){
+        if(_optimalTrajectory[i] == MOVE_FORWARD){
+            Serial.println("Forward");
+        }
+        else if(_optimalTrajectory[i] == MOVE_LEFT){
+            Serial.println("Left");
+        }
+        else if(_optimalTrajectory[i] == MOVE_RIGHT){
+            Serial.println("right");
+        }
+        else
+            Serial.println(_optimalTrajectory[i]);
+    }
+
+    x = 0;
 
     SimpleAction action = _optimalTrajectory[0];
     _optimalTrajectory.remove(0);
 
-    x = 1;
-
     if (action == MOVE_FORWARD)
-        addCyclogramToQueue(Forward);
-
-    ORTHO_F();
+        ORTHO();
 }
 
-void smartSolverTick(){
-    if(gCurrentRunState == FAST_RUN){
-        if(isCyclogramsEmpty()){
-            _endPoint.x = 0;
-            _endPoint.y = 0;
-            gCurrentRunState = SERCH_END;
-        }
-    }
-}
-
-void ORTHO_F()
+void ORTHO()
 {
     if (_optimalTrajectory.size() == 0)
         return;
@@ -206,19 +215,27 @@ void ORTHO_F()
     if (action == MOVE_FORWARD)
     {
         x++;
-        ORTHO_F();
+        ORTHO();
     }
     else if (action == MOVE_RIGHT)
     {
         for (int i = 0; i < x; i++)
-            addCyclogramToQueue(Forward45);
+        {
+            addCyclogramToQueue(Forward);
+
+            Serial.println("Forward");
+        }
 
         ORTHO_R();
     }
     else if (action == MOVE_LEFT)
     {
         for (int i = 0; i < x; i++)
-            addCyclogramToQueue(Forward45);
+        {
+            addCyclogramToQueue(Forward);
+
+            Serial.println("Forward");
+        }
 
         ORTHO_L();
     }
@@ -227,57 +244,420 @@ void ORTHO_F()
 void ORTHO_R()
 {
     if (_optimalTrajectory.size() == 0)
+    {
+        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(Rotate90Right);
+        addCyclogramToQueue(HalfForward);
+
+        Serial.println("Rotate 90 Right");
+
+        addCyclogramToQueue(Forward);
+
+        Serial.println("Forward");
+
         return;
+    }
 
     SimpleAction action = _optimalTrajectory[0];
     _optimalTrajectory.remove(0);
 
     if (action == MOVE_FORWARD)
     {
-        x = 2;
-
+        addCyclogramToQueue(HalfForward);
         addCyclogramToQueue(Rotate90Right);
+        addCyclogramToQueue(HalfForward);
 
-        ORTHO_F();
+        Serial.println("Rotate 90 Right");
+
+        x = 0;
+
+        ORTHO();
     }
     else if (action == MOVE_RIGHT)
     {
-        addCyclogramToQueue(Rotate90Right);
-        addCyclogramToQueue(Forward);
-
-        ORTHO_R();
+        ORTHO_RR();
     }
-    else if(action == MOVE_LEFT){
-        addCyclogramToQueue(Rotate90Right);
-        addCyclogramToQueue(Forward);
+    else if (action == MOVE_LEFT)
+    {
+        addCyclogramToQueue(Rotate45Right);
 
-        ORTHO_L();
+        Serial.println("rotate 45 Right");
+
+        x = 0;
+
+        DIAG_RL();
     }
 }
 
 void ORTHO_L()
 {
     if (_optimalTrajectory.size() == 0)
+    {
+        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(Rotate90Left);
+        addCyclogramToQueue(HalfForward);
+
+        Serial.println("Rotate 90 Left");
+
+        addCyclogramToQueue(Forward);
+        Serial.println("forward");
+
         return;
+    }
 
     SimpleAction action = _optimalTrajectory[0];
     _optimalTrajectory.remove(0);
 
-    if(action == MOVE_FORWARD){
+    if (action == MOVE_FORWARD)
+    {
+        addCyclogramToQueue(HalfForward);
         addCyclogramToQueue(Rotate90Left);
+        addCyclogramToQueue(HalfForward);
 
-        ORTHO_F();
+        Serial.println("Rotate 90 Left");
+
+        x = 0;
+
+        ORTHO();
     }
-    else if(action == MOVE_RIGHT){
-        addCyclogramToQueue(Rotate90Left);
+    else if (action == MOVE_LEFT)
+    {
+        ORTHO_LL();
+    }
+    else if (action == MOVE_RIGHT)
+    {
+        addCyclogramToQueue(Rotate45Left);
+
+        Serial.println("Rotate 45 left");
+        x = 0;
+        DIAG_LR();
+    }
+}
+
+void ORTHO_RR()
+{
+    if (_optimalTrajectory.size() == 0){
+        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(Rotate90Right);
+        addCyclogramToQueue(Rotate90Right);
+        addCyclogramToQueue(HalfForward);
+
+        Serial.println("Rotate 180 right");
+
         addCyclogramToQueue(Forward);
 
-        ORTHO_R();
+        Serial.println("Forward");
+
+        return;
     }
-    else if(action == MOVE_LEFT){
+
+    SimpleAction action = _optimalTrajectory[0];
+    _optimalTrajectory.remove(0);
+
+    if (action == MOVE_FORWARD)
+    {
+        x = 0;
+        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(Rotate90Right);
+        addCyclogramToQueue(Rotate90Right);
+        addCyclogramToQueue(HalfForward);
+
+        Serial.println("Rotate 180 right");
+
+        ORTHO();
+    }
+    else if (action == MOVE_LEFT)
+    {
+        x = 0;
+        addCyclogramToQueue(Rotate135Right);
+
+        Serial.println("rotate 135 right");
+
+        DIAG_RL();
+    }
+}
+
+void ORTHO_LL()
+{
+    if (_optimalTrajectory.size() == 0)
+    {
+        addCyclogramToQueue(HalfForward);
         addCyclogramToQueue(Rotate90Left);
+        addCyclogramToQueue(Rotate90Left);
+        addCyclogramToQueue(HalfForward);
+
+        Serial.println("rotate 180 Left");
+
         addCyclogramToQueue(Forward);
 
-        ORTHO_L();
+        Serial.println("Forward");
+
+        return;
+    }
+
+    SimpleAction action = _optimalTrajectory[0];
+    _optimalTrajectory.remove(0);
+
+    if (action == MOVE_FORWARD)
+    {
+        x = 0;
+        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(Rotate90Left);
+        addCyclogramToQueue(Rotate90Left);
+        addCyclogramToQueue(HalfForward);
+
+        Serial.println("rotate 180 Left");
+
+        ORTHO();
+    }
+    else if (action == MOVE_RIGHT)
+    {
+        x = 0;
+        addCyclogramToQueue(Rotate135Left);
+
+        Serial.println("rotate 135 left");
+
+        DIAG_LR();
+    }
+}
+
+void DIAG_LR()
+{
+    if (_optimalTrajectory.size() == 0)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            addCyclogramToQueue(Forward45);
+            Serial.println("Forward 45");
+        }
+
+        addCyclogramToQueue(Rotate45RightRevers);
+
+        Serial.println("Rotate 45 right revers");
+
+        addCyclogramToQueue(Forward);
+
+        Serial.println("Forward");
+
+        return;
+    }
+
+    SimpleAction action = _optimalTrajectory[0];
+    _optimalTrajectory.remove(0);
+
+    if (action == MOVE_FORWARD)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            addCyclogramToQueue(Forward45);
+            Serial.println("Forward 45");
+        }
+
+        addCyclogramToQueue(Rotate45RightRevers);
+
+        Serial.println("Rotate 45 Right revers");
+
+        x = 0;
+
+        ORTHO();
+    }
+    else if (action == MOVE_RIGHT)
+    {
+        DIAG_RR();
+    }
+    else if (action == MOVE_LEFT)
+    {
+        x++;
+
+        DIAG_RL();
+    }
+}
+
+void DIAG_RL()
+{
+    if (_optimalTrajectory.size() == 0)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            addCyclogramToQueue(Forward45);
+
+            Serial.println("Forward 45");
+        }
+
+        addCyclogramToQueue(Rotate45LeftRevers);
+
+        Serial.println("rotate 45 left revers");
+
+        addCyclogramToQueue(Forward);
+
+        Serial.println("Forward");
+
+        return;
+    }
+
+    SimpleAction action = _optimalTrajectory[0];
+    _optimalTrajectory.remove(0);
+
+    if (action == MOVE_FORWARD)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            addCyclogramToQueue(Forward45);
+
+            Serial.println("Forward 45");
+        }
+
+        addCyclogramToQueue(Rotate45LeftRevers);
+
+        Serial.println("rotate 45 left revers");
+
+        x = 0;
+
+        ORTHO();
+    }
+    else if (action == MOVE_LEFT)
+    {
+        DIAG_LL();
+    }
+    else if (action == MOVE_RIGHT)
+    {
+        x++;
+
+        DIAG_LR();
+    }
+}
+
+void DIAG_RR()
+{
+    if (_optimalTrajectory.size() == 0)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            addCyclogramToQueue(Forward45);
+            Serial.println("Forward 45");
+        }
+
+        addCyclogramToQueue(Rotate135RightRevers);
+
+        Serial.println("rotate 135 right revers");
+
+        addCyclogramToQueue(Forward);
+
+        Serial.println("Forward");
+
+        return;
+    }
+
+    SimpleAction action = _optimalTrajectory[0];
+    _optimalTrajectory.remove(0);
+
+    if (action == MOVE_FORWARD)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            addCyclogramToQueue(Forward45);
+
+            Serial.println("forward 45");
+        }
+
+        addCyclogramToQueue(Rotate135RightRevers);
+
+        Serial.println("rotate 135 right revers");
+
+        x = 0;
+
+        ORTHO();
+    }
+    else if (action == MOVE_LEFT)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            addCyclogramToQueue(Forward45);
+
+            Serial.println("Forward 45");
+        }
+
+        addCyclogramToQueue(Diagonal90Right);
+
+        Serial.println("diagonal 90 right");
+
+        x = 0;
+
+        DIAG_RL();
+    }
+}
+
+void DIAG_LL()
+{
+    if (_optimalTrajectory.size() == 0)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            addCyclogramToQueue(Forward45);
+
+            Serial.println("forward 45");
+        }
+
+        addCyclogramToQueue(Rotate135LeftRevers);
+
+        Serial.println("rotate 135 left revers");
+
+        addCyclogramToQueue(Forward);
+
+        Serial.println("Forward");
+
+        return;
+    }
+
+    SimpleAction action = _optimalTrajectory[0];
+    _optimalTrajectory.remove(0);
+
+    if (action == MOVE_RIGHT)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            addCyclogramToQueue(Forward45);
+
+            Serial.println("Forward 45");
+        }
+
+        addCyclogramToQueue(Diagonal90Left);
+
+        Serial.println("dagonal 90 left");
+
+        x = 0;
+
+        DIAG_LR();
+    }
+    else if (action == MOVE_FORWARD)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            addCyclogramToQueue(Forward45);
+
+            Serial.println("Forward 45");
+        }
+
+        addCyclogramToQueue(Rotate135LeftRevers);
+        Serial.println("Rotate 135 left revers");
+
+        x = 0;
+
+        ORTHO();
+    }
+}
+
+void smartSolverTick()
+{
+    if (gCurrentRunState == FAST_RUN) 
+    {
+        if (isCyclogramsEmpty())
+        {
+            _endPoint.x = 0;
+            _endPoint.y = 0;
+            _currentRobotDirection = _virtualCurrentDirection;
+            _currentRobotPos = _virtualCurrentPos;
+            gCurrentRunState = SERCH_END;
+        }
     }
 }

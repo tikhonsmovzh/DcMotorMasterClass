@@ -19,7 +19,7 @@ float leftFilter(float wRaw){
 
     w += (wRaw - w) * LPF_ALPHA;
 
-    return w;
+    return  w;
 }
 
 float rightFilter(float wRaw){

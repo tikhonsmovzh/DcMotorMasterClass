@@ -20,7 +20,7 @@ class Vector {
 
     void resize() 
     {
-      long int new_capacity = (capacity_ == 0 ? 400 : 2 * capacity_);
+      long int new_capacity = (capacity_ == 0 ? 30 : 2 * capacity_);
       T *new_data = new T[new_capacity];
       for (int i = 0; i < size_; i++) 
       {

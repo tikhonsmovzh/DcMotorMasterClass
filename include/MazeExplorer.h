@@ -316,7 +316,7 @@ void mazeExplorerTick()
     {
         static bool isStartButtonPresed = false;
 
-        if (gStartButtonPresed)
+        if (gDistanceFrontLeft > 250)
         {
             _startTimer.reset();
 
@@ -328,15 +328,20 @@ void mazeExplorerTick()
         {
             isStartButtonPresed = false;
 
-            if (_isExplorored){
+            if (_isExplorored)
+            {
                 gCurrentRunState = FAST_RUN;
 
                 findFastPath();
+
+                return;
             }
             else
+            {
                 gCurrentRunState = SERCH_FINISH;
 
-            resetState();
+                resetState();
+            }
         }
         else
             return;

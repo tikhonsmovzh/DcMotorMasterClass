@@ -110,7 +110,7 @@ void Start(Sensor *sensor, MotorState *motorState)
 
         callibrateRot(sensor, motorState);
     }
-    else if (sensor->time < forwardTime * 2.03f + 0.4f)
+    else if (sensor->time < forwardTime * 2.0f + 0.4f)
     {
         motorState->forwardVel = FORWARD_VEL;
         motorState->headingVelocity = 0.0f;
@@ -372,7 +372,7 @@ void Rotate45RightRevers(Sensor *sensor, MotorState *motorState)
 
 void Forward45(Sensor *sensor, MotorState *motorState)
 {
-    float forwardDistance = (CELL_SIZE * 0.5f) * sqrtf(2.0f) * 2.0f;
+    float forwardDistance = (CELL_SIZE * 0.5f) * sqrtf(2.0f);
 
     if (sensor->time < forwardDistance / FORWARD_VEL)
     {
@@ -499,7 +499,6 @@ void Rotate135RightRevers(Sensor *sensor, MotorState *motorState)
         motorState->isComplited = true;
 }
 
-
 void Rotate135LeftRevers(Sensor *sensor, MotorState *motorState)
 {
     float a = ROTATE_135_RADIUS / tanf(22.5f);
@@ -525,6 +524,40 @@ void Rotate135LeftRevers(Sensor *sensor, MotorState *motorState)
     {
         motorState->forwardVel = FORWARD_VEL;
         callibrateRot(sensor, motorState);
+        motorState->isComplited = false;
+    }
+    else
+        motorState->isComplited = true;
+}
+
+void Diagonal90Left(Sensor *sensor, MotorState *motorState){
+    const float radius = CELL_SIZE / sqrtf(2.0f);
+
+    const float headingVel = FORWARD_VEL / radius;
+    motorState->forwardVel = FORWARD_VEL;
+
+    const float rotTime = (2.0f * PI * radius) / FORWARD_VEL * 0.25;
+
+    if (rotTime * ROTATE_COLLIBREATE_K > sensor->time)
+    {
+        motorState->headingVelocity = headingVel;
+        motorState->isComplited = false;
+    }
+    else
+        motorState->isComplited = true;
+}
+
+void Diagonal90Right(Sensor *sensor, MotorState *motorState){
+    const float radius = CELL_SIZE / sqrtf(2.0f);
+
+    const float headingVel = FORWARD_VEL / radius;
+    motorState->forwardVel = FORWARD_VEL;
+
+    const float rotTime = (2.0f * PI * radius) / FORWARD_VEL * 0.25;
+
+    if (rotTime * ROTATE_COLLIBREATE_K > sensor->time)
+    {
+        motorState->headingVelocity = -headingVel;
         motorState->isComplited = false;
     }
     else

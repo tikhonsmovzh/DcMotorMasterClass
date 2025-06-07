@@ -47,7 +47,7 @@ void loop()
   cyclogramsTick();
 
   // Serial.print("Left Front: ");
-  // Serial.print(gDistanceFrontLeft);
+  // Serial.println(gDistanceFrontLeft);
   // Serial.print("  Right Front: ");
   // Serial.print(gDistanceFrontRight);
   // Serial.print("  Left diagonal: ");
