@@ -247,134 +247,26 @@ void Rotate180OnPlace(Sensor *sensor, MotorState *motorState)
 
 void Rotate45Right(Sensor *sensor, MotorState *motorState)
 {
-    float forwardTime = ROTATE_45_FORWARD_DIST / FORWARD_VEL;
+    float a = ROTATE_45_RADIUS / sqrtf(2.0f);
 
-    float a = CELL_SIZE - ROTATE_45_FORWARD_DIST - (ROTATE_45_FORWARD_DIST / sqrtf(2.0f));
-    float b = (CELL_SIZE * 0.5f) - (ROTATE_45_FORWARD_DIST / sqrtf(2.0f));
+    float b = (CELL_SIZE / 2.0f) - ROTATE_45_RADIUS + a;
 
-    float radius = sqrtf((a * a + b * b) / (2.0f - 2.0f * cosf(45.0f / 180.0f * PI)));
+    float firstForwardTime = (CELL_SIZE - b - a) / FORWARD_VEL;
+    float secondForwardTime = (b * sqrtf(2.0f)) / FORWARD_VEL;
+    float rotTime = (2.0f * PI * ROTATE_45_RADIUS) / FORWARD_VEL * 0.125;
 
-    float headingVel = -1.0f * FORWARD_VEL / radius;
-    float rotateTime = (2.0f * PI * radius) / FORWARD_VEL * 0.125f;
-
-    if (sensor->time < forwardTime * ROTATE_45_FIRST_FORWARD_K)
-    {
+    if(sensor->time < firstForwardTime){
         motorState->forwardVel = FORWARD_VEL;
         callibrateRot(sensor, motorState);
         motorState->isComplited = false;
     }
-    else if (sensor->time < forwardTime * ROTATE_45_FIRST_FORWARD_K + rotateTime)
-    {
+    else if(sensor->time < firstForwardTime + rotTime){
         motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = headingVel;
-        motorState->isComplited = false;
+        motorState->headingVelocity = -FORWARD_VEL / ROTATE_45_RADIUS;
     }
-    else if (sensor->time < forwardTime * ROTATE_45_FIRST_FORWARD_K + forwardTime + rotateTime)
-    {
+    else if(sensor->time < firstForwardTime + rotTime + secondForwardTime){
         motorState->forwardVel = FORWARD_VEL;
         motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate45RightRevers(Sensor *sensor, MotorState *motorState)
-{
-    float forwardTime = ROTATE_45_FORWARD_DIST / FORWARD_VEL;
-
-    float a = CELL_SIZE - ROTATE_45_FORWARD_DIST - (ROTATE_45_FORWARD_DIST / sqrtf(2.0f));
-    float b = (CELL_SIZE * 0.5f) - (ROTATE_45_FORWARD_DIST / sqrtf(2.0f));
-
-    float radius = sqrtf((a * a + b * b) / (2.0f - 2.0f * cosf(45.0f / 180.0f * PI)));
-
-    float headingVel = -1.0f * FORWARD_VEL / radius;
-    float rotateTime = (2.0f * PI * radius) / FORWARD_VEL * 0.125f;
-
-    if (sensor->time < forwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < forwardTime + rotateTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = headingVel;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < forwardTime * ROTATE_45_FIRST_FORWARD_K + forwardTime + rotateTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate45Left(Sensor *sensor, MotorState *motorState)
-{
-    float forwardTime = ROTATE_45_FORWARD_DIST / FORWARD_VEL;
-
-    float a = CELL_SIZE - ROTATE_45_FORWARD_DIST - (ROTATE_45_FORWARD_DIST / sqrtf(2.0f));
-    float b = (CELL_SIZE * 0.5f) - (ROTATE_45_FORWARD_DIST / sqrtf(2.0f));
-
-    float radius = sqrtf((a * a + b * b) / (2.0f - 2.0f * cosf(45.0f / 180.0f * PI)));
-
-    float headingVel = FORWARD_VEL / radius;
-    float rotateTime = (2.0f * PI * radius) / FORWARD_VEL * 0.125f;
-
-    if (sensor->time < forwardTime * ROTATE_45_FIRST_FORWARD_K)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < forwardTime * ROTATE_45_FIRST_FORWARD_K + rotateTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = headingVel;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < forwardTime * ROTATE_45_FIRST_FORWARD_K + forwardTime + rotateTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate45LeftRevers(Sensor *sensor, MotorState *motorState)
-{
-    float forwardTime = ROTATE_45_FORWARD_DIST / FORWARD_VEL;
-
-    float a = CELL_SIZE - ROTATE_45_FORWARD_DIST - (ROTATE_45_FORWARD_DIST / sqrtf(2.0f));
-    float b = (CELL_SIZE * 0.5f) - (ROTATE_45_FORWARD_DIST / sqrtf(2.0f));
-
-    float radius = sqrtf((a * a + b * b) / (2.0f - 2.0f * cosf(45.0f / 180.0f * PI)));
-
-    float headingVel = FORWARD_VEL / radius;
-    float rotateTime = (2.0f * PI * radius) / FORWARD_VEL * 0.125f;
-
-    if (sensor->time < forwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < forwardTime + rotateTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = headingVel;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < forwardTime * ROTATE_45_FIRST_FORWARD_K + forwardTime + rotateTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
         motorState->isComplited = false;
     }
     else

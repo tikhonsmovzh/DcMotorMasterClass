@@ -73,8 +73,7 @@
 
 #define ROTATE180_ADED_DIST 0.05f
 
-#define ROTATE_45_FORWARD_DIST (CELL_SIZE * 0.4f)
-#define ROTATE_45_FIRST_FORWARD_K 1.0f
+#define ROTATE_45_RADIUS (CELL_SIZE * 0.3f)
   
 //Maze
 #define MAZE_SIZE_X 5
