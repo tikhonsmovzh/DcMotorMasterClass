@@ -26,11 +26,6 @@ void setup()
   mazeExplorerInit();
   odometryInit();
   motorInit();
-
-  addCyclogramToQueue(StartCenter);
-  addCyclogramToQueue(Rotate45Right);
-  // addCyclogramToQueue(Forward45);
-  // addCyclogramToQueue(Rotate45LeftRevers);
 }
 
 void loop()
@@ -48,7 +43,7 @@ void loop()
   distanceSensorsTick();
   smartSolverTick();
 
-  // mazeExplorerTick();
+  mazeExplorerTick();
   cyclogramsTick();
 
   // Serial.print("Left Front: ");
