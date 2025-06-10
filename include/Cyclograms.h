@@ -22,6 +22,11 @@ struct MotorState
     bool isComplited = false;
 };
 
+struct ICyclogram
+{
+    virtual void run(Sensor *, MotorState *) = 0;
+};
+
 void callibrateRot(Sensor *sensor, MotorState *motorState)
 {
     bool leftWall = isWallLeft();
@@ -47,95 +52,307 @@ void callibrateRot(Sensor *sensor, MotorState *motorState)
     motorState->headingVelocity = u;
 }
 
-void Forward(Sensor *sensor, MotorState *motorState)
+class Forward : public ICyclogram
 {
-    motorState->forwardVel = FORWARD_VEL;
+private:
+    bool _isFast;
+    bool _isHalf;
+    bool _is45;
 
-    callibrateRot(sensor, motorState);
-
-    if (sensor->time > CELL_SIZE / FORWARD_VEL * FORWARD_COLLIBREATE_K ||
-        max(sensor->distanceFrontLeft, sensor->distanceFrontRight) > FORWARD_RIDE_TRIGGER_DIST)
-        motorState->isComplited = true;
-}
-
-void Rotate180(Sensor *sensor, MotorState *motorState)
-{
-    float rotTime = PI / ROTATE_VEL * ROTATE180_COLLIBREATE_K;
-    float forwardTime = CELL_SIZE / FORWARD_VEL;
-
-    float addedTime = ROTATE180_ADED_DIST / FORWARD_VEL;
-
-    if (sensor->time < forwardTime / 2)
+public:
+    Forward(bool fast, bool half, bool is45)
     {
-        motorState->forwardVel = FORWARD_VEL;
+        _isFast = fast;
+        _isHalf = half;
+        _is45 = is45;
+    }
+
+    void run(Sensor *sensor, MotorState *motorState) override
+    {
+        motorState->forwardVel = _isFast ? FAST_FORWARD_VEL : FORWARD_VEL;
 
         callibrateRot(sensor, motorState);
-    }
-    else if (sensor->time < rotTime + forwardTime / 2)
-    {
-        motorState->headingVelocity = ROTATE_VEL;
-        motorState->forwardVel = 0.0;
-    }
-    else if (sensor->time < forwardTime + rotTime + addedTime)
-    {
-        motorState->forwardVel = -FORWARD_VEL;
 
-        callibrateRot(sensor, motorState);
+        if (sensor->time > (_is45 ? ((CELL_SIZE * 0.5f) * sqrtf(2.0f)) : CELL_SIZE) / FORWARD_VEL * FORWARD_COLLIBREATE_K * (_isHalf ? 0.5f : 1.0f) ||
+            max(sensor->distanceFrontLeft, sensor->distanceFrontRight) > FORWARD_RIDE_TRIGGER_DIST)
+            motorState->isComplited = true;
     }
-    else if (sensor->time < forwardTime * 2 + addedTime + rotTime - (ROBOT_WHHEL_DIF / FORWARD_VEL))
-    {
-        motorState->forwardVel = FORWARD_VEL;
+};
 
-        callibrateRot(sensor, motorState);
-    }
-    else
-        motorState->isComplited = true;
-}
+Forward FORWARD(false, false, false);
+Forward HALF_FORWARD(false, true, false);
+Forward FAST_FORWARD(true, false, false);
+Forward FAST_HALF_FORWARD(true, true, false);
+Forward FORWARD_45(false, false, true);
+Forward FORWARD_45_FAST(true, false, true);
 
-void Idle(Sensor *sensor, MotorState *motorState)
+class Rotate180 : public ICyclogram
 {
-    motorState->forwardVel = 0.0;
-    motorState->headingVelocity = 0.0f;
-    motorState->isComplited = false;
-}
-
-void Start(Sensor *sensor, MotorState *motorState)
-{
-    float forwardTime = (CELL_SIZE - ROBOT_WHHEL_DIF) / FORWARD_VEL;
-
-    if (sensor->time < forwardTime + 0.4f)
+public:
+    void run(Sensor *sensor, MotorState *motorState) override
     {
-        motorState->forwardVel = -FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
+        float rotTime = PI / ROTATE_VEL * ROTATE180_COLLIBREATE_K;
+        float forwardTime = CELL_SIZE / FORWARD_VEL;
 
-        callibrateRot(sensor, motorState);
+        float addedTime = ROTATE180_ADED_DIST / FORWARD_VEL;
+
+        if (sensor->time < forwardTime / 2)
+        {
+            motorState->forwardVel = FORWARD_VEL;
+
+            callibrateRot(sensor, motorState);
+        }
+        else if (sensor->time < rotTime + forwardTime / 2)
+        {
+            motorState->headingVelocity = ROTATE_VEL;
+            motorState->forwardVel = 0.0;
+        }
+        else if (sensor->time < forwardTime + rotTime + addedTime)
+        {
+            motorState->forwardVel = -FORWARD_VEL;
+
+            callibrateRot(sensor, motorState);
+        }
+        else if (sensor->time < forwardTime * 2 + addedTime + rotTime - (ROBOT_WHHEL_DIF / FORWARD_VEL))
+        {
+            motorState->forwardVel = FORWARD_VEL;
+
+            callibrateRot(sensor, motorState);
+        }
+        else
+            motorState->isComplited = true;
     }
-    else if (sensor->time < forwardTime * 2.0f + 0.4f)
+};
+
+Rotate180 ROTATE_180;
+
+class Start : public ICyclogram
+{
+private:
+    bool _toCenter;
+
+public:
+    Start(bool toCenter)
     {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-
-        callibrateRot(sensor, motorState);
+        _toCenter = toCenter;
     }
-    else
-        motorState->isComplited = true;
-}
 
-void Stop(Sensor *sensor, MotorState *motorState)
+    void run(Sensor *sensor, MotorState *motorState) override
+    {
+        float forwardTime = (CELL_SIZE - ROBOT_WHHEL_DIF) / FORWARD_VEL;
+        float adedTime = ROTATE180_ADED_DIST / FORWARD_VEL;
+
+        if (sensor->time < forwardTime + adedTime)
+        {
+            motorState->forwardVel = -FORWARD_VEL;
+            motorState->headingVelocity = 0.0f;
+
+            callibrateRot(sensor, motorState);
+        }
+        else if (sensor->time < forwardTime + adedTime + _toCenter ? ((CELL_SIZE / 2.0f - ROBOT_WHHEL_DIF) / FORWARD_VEL) : forwardTime)
+        {
+            motorState->forwardVel = FORWARD_VEL;
+            motorState->headingVelocity = 0.0f;
+
+            callibrateRot(sensor, motorState);
+        }
+        else
+            motorState->isComplited = true;
+    }
+};
+
+Start START(false);
+Start START_CENTER(true);
+
+class Rotate90 : public ICyclogram
 {
-    motorState->forwardVel = 0.0;
-    motorState->headingVelocity = 0.0f;
-    motorState->isComplited = true;
-}
+private:
+    bool _isFast;
+    bool _side; // true - left
+    bool _isFixed;
 
-void Rotate90Left(Sensor *sensor, MotorState *motorState)
+public:
+    Rotate90(bool fast, bool side, bool fixed)
+    {
+        _isFast = fast;
+        _side = side;
+        _isFixed = fixed;
+    }
+
+    void run(Sensor *sensor, MotorState *motorState) override
+    {
+        const float radius = (CELL_SIZE * (_isFixed ? 0.29f : 0.49f));
+
+        const float headingVel = _side ? 1.0f : -1.0f * ((_isFast ? FAST_FORWARD_VEL : FORWARD_VEL) / radius);
+        motorState->forwardVel = _isFast ? FAST_FORWARD_VEL : FORWARD_VEL;
+
+        const float rotTime = (2.0f * PI * radius) / (_isFast ? FAST_FORWARD_VEL : FORWARD_VEL) * 0.25;
+
+        const float forwardTime = _isFixed ? (CELL_SIZE * 0.21f / FORWARD_VEL) : 0.0f;
+
+        if (forwardTime > sensor->time)
+        {
+            callibrateRot(sensor, motorState);
+            motorState->isComplited = false;
+        }
+        else if (rotTime * ROTATE_COLLIBREATE_K + forwardTime > sensor->time)
+        {
+            motorState->headingVelocity = headingVel;
+        }
+        else if (rotTime * ROTATE_COLLIBREATE_K + 2.0f * forwardTime > sensor->time)
+        {
+            callibrateRot(sensor, motorState);
+            motorState->isComplited = false;
+        }
+        else
+            motorState->isComplited = true;
+    }
+};
+
+Rotate90 ROTATE_90_RIGHT(false, false, false);
+Rotate90 ROTATE_90_LEFT(false, true, false);
+Rotate90 ROTATE_90_RIGHT_FIX(false, false, true);
+Rotate90 ROTATE_90_LEFT_FIX(false, true, true);
+Rotate90 ROTATE_90_RIGHT_FAST(true, false, false);
+Rotate90 ROTATE_90_LEFT_FAST(true, true, false);
+
+class Rotate45 : public ICyclogram
 {
-    const float radius = (CELL_SIZE * 0.49f);
+private:
+    bool _side;
+    bool _isRevers;
 
-    const float headingVel = 1.0 * (FORWARD_VEL / radius);
-    motorState->forwardVel = FORWARD_VEL;
+public:
+    Rotate45(bool side, bool revers)
+    {
+        _side = side;
+        _isRevers = revers;
+    }
 
-    const float rotTime = (2.0f * PI * radius) / FORWARD_VEL * 0.25;
+    void run(Sensor *sensor, MotorState *motorState) override
+    {
+        float a = ROTATE_45_RADIUS / sqrtf(2.0f);
+
+        float b = (CELL_SIZE / 2.0f) - ROTATE_45_RADIUS + a;
+
+        float firstForwardTime = (CELL_SIZE - b - a) / FAST_FORWARD_VEL * ROTATE_45_FIRST_FORWARD_K;
+        float secondForwardTime = (b * sqrtf(2.0f)) / FAST_FORWARD_VEL;
+        float rotTime = (2.0f * PI * ROTATE_45_RADIUS) / FAST_FORWARD_VEL * 0.125;
+
+        if (sensor->time < _isRevers ? secondForwardTime : firstForwardTime)
+        {
+            motorState->forwardVel = FAST_FORWARD_VEL;
+
+            if (_isRevers)
+                motorState->headingVelocity = 0.0f;
+            else
+                callibrateRot(sensor, motorState);
+
+            motorState->isComplited = false;
+        }
+        else if (sensor->time < firstForwardTime + rotTime)
+        {
+            motorState->forwardVel = FAST_FORWARD_VEL;
+            motorState->headingVelocity = (_side ? 1.0f : -1.0f) * FAST_FORWARD_VEL / ROTATE_45_RADIUS;
+        }
+        else if (sensor->time < firstForwardTime + rotTime + secondForwardTime)
+        {
+            motorState->forwardVel = FAST_FORWARD_VEL;
+
+            if (!_isRevers)
+                motorState->headingVelocity = 0.0f;
+            else
+                callibrateRot(sensor, motorState);
+
+            motorState->isComplited = false;
+        }
+        else
+            motorState->isComplited = true;
+    }
+};
+
+Rotate45 ROTATE_45_RIGHT(false, false);
+Rotate45 ROTATE_45_LEFT(true, false);
+Rotate45 ROTATE_45_RIGHT_REVERS(false, true);
+Rotate45 ROTATE_45_LEFT_REVERS(true, true);
+
+class Rotate135 : public ICyclogram
+{
+private:
+    bool _side;
+    bool _isRevers;
+
+public:
+    Rotate135(bool side, bool revers)
+    {
+        _side = side;
+        _isRevers = revers;
+    }
+
+    void run(Sensor *sensor, MotorState *motorState) override
+    {
+        float a = ROTATE_135_RADIUS / tanf(22.5f);
+        float b = CELL_SIZE / tanf(45.0f) - a;
+
+        float firstForwardTime = ((CELL_SIZE / 2.0f) + b) / FAST_FORWARD_VEL * ROTATE_135_FIRST_FORWARD_K;
+        float secondForwardTime = (CELL_SIZE / sinf(45.0f) - a) / FAST_FORWARD_VEL;
+        float rotTime = (2.0f * PI * ROTATE_135_RADIUS) / FAST_FORWARD_VEL * 0.375;
+
+        if (sensor->time < (_isRevers ? secondForwardTime : firstForwardTime))
+        {
+            motorState->forwardVel = FAST_FORWARD_VEL;
+
+            if (_isRevers)
+                motorState->headingVelocity = 0.0f;
+            else
+                callibrateRot(sensor, motorState);
+
+            motorState->isComplited = false;
+        }
+        else if (sensor->time < firstForwardTime + rotTime)
+        {
+            motorState->forwardVel = FAST_FORWARD_VEL;
+            motorState->headingVelocity = (_side ? 1.0f : -1.0f) * FAST_FORWARD_VEL / ROTATE_135_RADIUS;
+            motorState->isComplited = false;
+        }
+        else if (sensor->time < firstForwardTime + secondForwardTime + rotTime)
+        {
+            motorState->forwardVel = FAST_FORWARD_VEL;
+
+            if (!_isRevers)
+                motorState->headingVelocity = 0.0f;
+            else
+                callibrateRot(sensor, motorState);
+
+            motorState->isComplited = false;
+        }
+        else
+            motorState->isComplited = true;
+    }
+};
+
+Rotate135 ROTATE_135_LEFT(true, false);
+Rotate135 ROTATE_135_RIGHT(false, false);
+Rotate135 ROTATE_135_LEFT_REVERS(true, true);
+Rotate135 ROTATE_135_RIGHT_REVERS(false, true);
+
+class Diagnal90: public ICyclogram
+{
+    private:
+    bool _side;
+
+    public:
+    Diagnal90(bool side){
+        _side = side;
+    }
+
+    void run(Sensor *sensor, MotorState *motorState) override{
+const float radius = CELL_SIZE / sqrtf(2.0f);
+
+    const float headingVel = (_side ? 1.0f : -1.0f) * FAST_FORWARD_VEL / radius;
+    motorState->forwardVel = FAST_FORWARD_VEL;
+
+    const float rotTime = (2.0f * PI * radius) / FAST_FORWARD_VEL * 0.25;
 
     if (rotTime * ROTATE_COLLIBREATE_K > sensor->time)
     {
@@ -144,427 +361,13 @@ void Rotate90Left(Sensor *sensor, MotorState *motorState)
     }
     else
         motorState->isComplited = true;
-}
-
-void Rotate90Right(Sensor *sensor, MotorState *motorState)
-{
-    const float radius = (CELL_SIZE * 0.49f);
-
-    const float headingVel = -1.0 * (FORWARD_VEL / radius);
-    motorState->forwardVel = FORWARD_VEL;
-
-    const float rotTime = (2.0f * PI * radius) / FORWARD_VEL * 0.25;
-
-    if (rotTime * ROTATE_COLLIBREATE_K > sensor->time)
-    {
-        motorState->headingVelocity = headingVel;
-        motorState->isComplited = false;
     }
-    else
-        motorState->isComplited = true;
-}
+};
 
-void Rotate90RightFix(Sensor *sensor, MotorState *motorState)
-{
-    const float radius = (CELL_SIZE * 0.29f);
+Diagnal90 DIAGONAL_90_LEFT(true);
+Diagnal90 DIAGONAL_90_RIGHT(false);
 
-    const float headingVel = -1.0 * (FORWARD_VEL / radius);
-    motorState->forwardVel = FORWARD_VEL;
-
-    const float rotTime = (2.0f * PI * radius) / FORWARD_VEL * 0.25;
-
-    const float forwardTime = CELL_SIZE * 0.21f / FORWARD_VEL;
-
-    if (forwardTime > sensor->time)
-    {
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else if (rotTime * ROTATE_COLLIBREATE_K + forwardTime > sensor->time)
-    {
-        motorState->headingVelocity = headingVel;
-        motorState->isComplited = false;
-    }
-    else if (rotTime * ROTATE_COLLIBREATE_K + 2.0f * forwardTime > sensor->time)
-    {
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate90LeftFix(Sensor *sensor, MotorState *motorState)
-{
-    const float radius = (CELL_SIZE * 0.29f);
-
-    const float headingVel = (FORWARD_VEL / radius);
-    motorState->forwardVel = FORWARD_VEL;
-
-    const float rotTime = (2.0f * PI * radius) / FORWARD_VEL * 0.25;
-
-    const float forwardTime = CELL_SIZE * 0.21f / FORWARD_VEL;
-
-    if (forwardTime > sensor->time)
-    {
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else if (rotTime * ROTATE_COLLIBREATE_K + forwardTime > sensor->time)
-    {
-        motorState->headingVelocity = headingVel;
-    }
-    else if (rotTime * ROTATE_COLLIBREATE_K + 2.0f * forwardTime > sensor->time)
-    {
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void HalfForward(Sensor *sensor, MotorState *motorState)
-{
-    motorState->forwardVel = FORWARD_VEL;
-
-    callibrateRot(sensor, motorState);
-
-    if (sensor->time > CELL_SIZE / FORWARD_VEL * FORWARD_COLLIBREATE_K * 0.5f)
-        motorState->isComplited = true;
-}
-
-void Rotate180OnPlace(Sensor *sensor, MotorState *motorState)
-{
-    if (sensor->time < PI / ROTATE_VEL * ROTATE180_COLLIBREATE_K)
-    {
-        motorState->headingVelocity = ROTATE_VEL;
-        motorState->forwardVel = 0.0;
-
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate45Right(Sensor *sensor, MotorState *motorState)
-{
-    float a = ROTATE_45_RADIUS / sqrtf(2.0f);
-
-    float b = (CELL_SIZE / 2.0f) - ROTATE_45_RADIUS + a;
-
-    float firstForwardTime = (CELL_SIZE - b - a) / FORWARD_VEL * ROTATE_45_FIRST_FORWARD_K;
-    float secondForwardTime = (b * sqrtf(2.0f)) / FORWARD_VEL;
-    float rotTime = (2.0f * PI * ROTATE_45_RADIUS) / FORWARD_VEL * 0.125;
-
-    if (sensor->time < firstForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < firstForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = -FORWARD_VEL / ROTATE_45_RADIUS;
-    }
-    else if (sensor->time < firstForwardTime + rotTime + secondForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate45Left(Sensor *sensor, MotorState *motorState)
-{
-    float a = ROTATE_45_RADIUS / sqrtf(2.0f);
-
-    float b = (CELL_SIZE / 2.0f) - ROTATE_45_RADIUS + a;
-
-    float firstForwardTime = (CELL_SIZE - b - a) / FORWARD_VEL * ROTATE_45_FIRST_FORWARD_K;
-    float secondForwardTime = (b * sqrtf(2.0f)) / FORWARD_VEL;
-    float rotTime = (2.0f * PI * ROTATE_45_RADIUS) / FORWARD_VEL * 0.125;
-
-    if (sensor->time < firstForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < firstForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = FORWARD_VEL / ROTATE_45_RADIUS;
-    }
-    else if (sensor->time < firstForwardTime + rotTime + secondForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate45LeftRevers(Sensor *sensor, MotorState *motorState)
-{
-    float a = ROTATE_45_RADIUS / sqrtf(2.0f);
-
-    float b = (CELL_SIZE / 2.0f) - ROTATE_45_RADIUS + a;
-
-    float firstForwardTime = (CELL_SIZE - b - a) / FORWARD_VEL * ROTATE_45_FIRST_FORWARD_K;
-    float secondForwardTime = (b * sqrtf(2.0f)) / FORWARD_VEL;
-    float rotTime = (2.0f * PI * ROTATE_45_RADIUS) / FORWARD_VEL * 0.125;
-
-    if (sensor->time < secondForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < secondForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = FORWARD_VEL / ROTATE_45_RADIUS;
-    }
-    else if (sensor->time < firstForwardTime + rotTime + secondForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate45RightRevers(Sensor *sensor, MotorState *motorState)
-{
-    float a = ROTATE_45_RADIUS / sqrtf(2.0f);
-
-    float b = (CELL_SIZE / 2.0f) - ROTATE_45_RADIUS + a;
-
-    float firstForwardTime = (CELL_SIZE - b - a) / FORWARD_VEL * ROTATE_45_FIRST_FORWARD_K;
-    float secondForwardTime = (b * sqrtf(2.0f)) / FORWARD_VEL;
-    float rotTime = (2.0f * PI * ROTATE_45_RADIUS) / FORWARD_VEL * 0.125;
-
-    if (sensor->time < secondForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < secondForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = -FORWARD_VEL / ROTATE_45_RADIUS;
-    }
-    else if (sensor->time < firstForwardTime + rotTime + secondForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Forward45(Sensor *sensor, MotorState *motorState)
-{
-    float forwardDistance = (CELL_SIZE * 0.5f) * sqrtf(2.0f);
-
-    if (sensor->time < forwardDistance / FORWARD_VEL)
-    {
-        motorState->headingVelocity = 0.0f;
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void StartCenter(Sensor *sensor, MotorState *motorState)
-{
-    float forwardTime = (CELL_SIZE / 2.0f - ROBOT_WHHEL_DIF) / FORWARD_VEL;
-
-    if (sensor->time < forwardTime + 0.5f)
-    {
-        motorState->forwardVel = -FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < forwardTime * 2.0f + 0.5f)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate135Left(Sensor *sensor, MotorState *motorState)
-{
-    float a = ROTATE_135_RADIUS / tanf(22.5f);
-    float b = CELL_SIZE / tanf(45.0f) - a;
-
-    float firstForwardTime = ((CELL_SIZE / 2.0f) + b) / FORWARD_VEL * ROTATE_135_FIRST_FORWARD_K;
-    float secondForwardTime = (CELL_SIZE / sinf(45.0f) - a) / FORWARD_VEL;
-    float rotTime = (2.0f * PI * ROTATE_135_RADIUS) / FORWARD_VEL * 0.375;
-
-    if (sensor->time < firstForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < firstForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = FORWARD_VEL / ROTATE_135_RADIUS;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < firstForwardTime + secondForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate135Right(Sensor *sensor, MotorState *motorState)
-{
-    float a = ROTATE_135_RADIUS / tanf(22.5f);
-    float b = CELL_SIZE / tanf(45.0f) - a;
-
-    float firstForwardTime = ((CELL_SIZE / 2.0f) + b) / FORWARD_VEL * ROTATE_135_FIRST_FORWARD_K;
-    float secondForwardTime = (CELL_SIZE / sinf(45.0f) - a) / FORWARD_VEL;
-    float rotTime = (2.0f * PI * ROTATE_135_RADIUS) / FORWARD_VEL * 0.375;
-
-    if (sensor->time < firstForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < firstForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = -FORWARD_VEL / ROTATE_135_RADIUS;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < firstForwardTime + secondForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate135RightRevers(Sensor *sensor, MotorState *motorState)
-{
-    float a = ROTATE_135_RADIUS / tanf(22.5f);
-    float b = CELL_SIZE / tanf(45.0f) - a;
-
-    float firstForwardTime = ((CELL_SIZE / 2.0f) + b) / FORWARD_VEL * ROTATE_135_FIRST_FORWARD_K;
-    float secondForwardTime = (CELL_SIZE / sinf(45.0f) - a) / FORWARD_VEL;
-    float rotTime = (2.0f * PI * ROTATE_135_RADIUS) / FORWARD_VEL * 0.375;
-
-    if (sensor->time < secondForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < secondForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = -FORWARD_VEL / ROTATE_135_RADIUS;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < firstForwardTime + secondForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Rotate135LeftRevers(Sensor *sensor, MotorState *motorState)
-{
-    float a = ROTATE_135_RADIUS / tanf(22.5f);
-    float b = CELL_SIZE / tanf(45.0f) - a;
-
-    float firstForwardTime = ((CELL_SIZE / 2.0f) + b) / FORWARD_VEL * ROTATE_135_FIRST_FORWARD_K;
-    float secondForwardTime = (CELL_SIZE / sinf(45.0f) - a) / FORWARD_VEL;
-    float rotTime = (2.0f * PI * ROTATE_135_RADIUS) / FORWARD_VEL * 0.375;
-
-    if (sensor->time < secondForwardTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = 0.0f;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < secondForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        motorState->headingVelocity = FORWARD_VEL / ROTATE_135_RADIUS;
-        motorState->isComplited = false;
-    }
-    else if (sensor->time < firstForwardTime + secondForwardTime + rotTime)
-    {
-        motorState->forwardVel = FORWARD_VEL;
-        callibrateRot(sensor, motorState);
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Diagonal90Left(Sensor *sensor, MotorState *motorState){
-    const float radius = CELL_SIZE / sqrtf(2.0f);
-
-    const float headingVel = FORWARD_VEL / radius;
-    motorState->forwardVel = FORWARD_VEL;
-
-    const float rotTime = (2.0f * PI * radius) / FORWARD_VEL * 0.25;
-
-    if (rotTime * ROTATE_COLLIBREATE_K > sensor->time)
-    {
-        motorState->headingVelocity = headingVel;
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-void Diagonal90Right(Sensor *sensor, MotorState *motorState){
-    const float radius = CELL_SIZE / sqrtf(2.0f);
-
-    const float headingVel = FORWARD_VEL / radius;
-    motorState->forwardVel = FORWARD_VEL;
-
-    const float rotTime = (2.0f * PI * radius) / FORWARD_VEL * 0.25;
-
-    if (rotTime * ROTATE_COLLIBREATE_K > sensor->time)
-    {
-        motorState->headingVelocity = -headingVel;
-        motorState->isComplited = false;
-    }
-    else
-        motorState->isComplited = true;
-}
-
-Vector<void (*)(Sensor *, MotorState *)> _cyclograms;
+Vector<ICyclogram *> _cyclograms;
 float _lastCyclogramTime = 0.0;
 
 void cyclogramsInit()
@@ -592,7 +395,7 @@ void cyclogramsTick()
     sensor.distanceFrontLeft = gDistanceFrontLeft;
     sensor.distanceFrontRight = gDistanceFrontRight;
 
-    _cyclograms[0](&sensor, &motorState);
+    _cyclograms[0]->run(&sensor, &motorState);
 
     setDriveVelocity(motorState.forwardVel, motorState.headingVelocity);
 
@@ -611,14 +414,7 @@ bool isCyclogramsEmpty()
     return _cyclograms.size() == 0;
 }
 
-void addCyclogramToQueue(void (*cyc)(Sensor *, MotorState *))
+void addCyclogramToQueue(ICyclogram *cyclogram)
 {
-    _cyclograms.push_back(cyc);
-}
-
-void runCyclogram(void (*cyc)(Sensor *, MotorState *))
-{
-    _cyclograms.clear();
-
-    addCyclogramToQueue(cyc);
+    _cyclograms.push_back(cyclogram);
 }

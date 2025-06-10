@@ -55,6 +55,7 @@
 //cyclograms
 #define FORWARD_VEL 0.2f
 #define ROTATE_VEL 6.0f
+#define FAST_FORWARD_VEL 0.4f
 #define CELL_SIZE 0.18f
 
 #define FORWARD_CYCLOGRAM_P 0.0087f

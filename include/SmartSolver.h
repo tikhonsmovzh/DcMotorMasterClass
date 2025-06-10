@@ -177,23 +177,7 @@ void findFastPath()
         }
     } while (state != MazeSolver::END && state != MazeSolver::UKNNOWN);
 
-    addCyclogramToQueue(StartCenter);
-
-    Serial.println(_optimalTrajectory.size());
-
-    for(int i = 0; i < _optimalTrajectory.size(); i++){
-        if(_optimalTrajectory[i] == MOVE_FORWARD){
-            Serial.println("Forward");
-        }
-        else if(_optimalTrajectory[i] == MOVE_LEFT){
-            Serial.println("Left");
-        }
-        else if(_optimalTrajectory[i] == MOVE_RIGHT){
-            Serial.println("right");
-        }
-        else
-            Serial.println(_optimalTrajectory[i]);
-    }
+    addCyclogramToQueue(&START_CENTER);
 
     x = 0;
 
@@ -221,7 +205,7 @@ void ORTHO()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward);
+            addCyclogramToQueue(&FAST_FORWARD);
 
             Serial.println("Forward");
         }
@@ -232,7 +216,7 @@ void ORTHO()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward);
+            addCyclogramToQueue(&FAST_FORWARD);
 
             Serial.println("Forward");
         }
@@ -245,13 +229,13 @@ void ORTHO_R()
 {
     if (_optimalTrajectory.size() == 0)
     {
-        addCyclogramToQueue(HalfForward);
-        addCyclogramToQueue(Rotate90Right);
-        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
+        addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
 
         Serial.println("Rotate 90 Right");
 
-        addCyclogramToQueue(Forward);
+        addCyclogramToQueue(&FAST_FORWARD);
 
         Serial.println("Forward");
 
@@ -263,9 +247,9 @@ void ORTHO_R()
 
     if (action == MOVE_FORWARD)
     {
-        addCyclogramToQueue(HalfForward);
-        addCyclogramToQueue(Rotate90Right);
-        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
+        addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
 
         Serial.println("Rotate 90 Right");
 
@@ -279,7 +263,7 @@ void ORTHO_R()
     }
     else if (action == MOVE_LEFT)
     {
-        addCyclogramToQueue(Rotate45Right);
+        addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
 
         Serial.println("rotate 45 Right");
 
@@ -293,13 +277,13 @@ void ORTHO_L()
 {
     if (_optimalTrajectory.size() == 0)
     {
-        addCyclogramToQueue(HalfForward);
-        addCyclogramToQueue(Rotate90Left);
-        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
+        addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
 
         Serial.println("Rotate 90 Left");
 
-        addCyclogramToQueue(Forward);
+        addCyclogramToQueue(&FAST_FORWARD);
         Serial.println("forward");
 
         return;
@@ -310,9 +294,9 @@ void ORTHO_L()
 
     if (action == MOVE_FORWARD)
     {
-        addCyclogramToQueue(HalfForward);
-        addCyclogramToQueue(Rotate90Left);
-        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
+        addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
 
         Serial.println("Rotate 90 Left");
 
@@ -326,7 +310,7 @@ void ORTHO_L()
     }
     else if (action == MOVE_RIGHT)
     {
-        addCyclogramToQueue(Rotate45Left);
+        addCyclogramToQueue(&ROTATE_45_LEFT);
 
         Serial.println("Rotate 45 left");
         x = 0;
@@ -336,15 +320,16 @@ void ORTHO_L()
 
 void ORTHO_RR()
 {
-    if (_optimalTrajectory.size() == 0){
-        addCyclogramToQueue(HalfForward);
-        addCyclogramToQueue(Rotate90Right);
-        addCyclogramToQueue(Rotate90Right);
-        addCyclogramToQueue(HalfForward);
+    if (_optimalTrajectory.size() == 0)
+    {
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
+        addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+        addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
 
         Serial.println("Rotate 180 right");
 
-        addCyclogramToQueue(Forward);
+        addCyclogramToQueue(&FAST_FORWARD);
 
         Serial.println("Forward");
 
@@ -357,10 +342,10 @@ void ORTHO_RR()
     if (action == MOVE_FORWARD)
     {
         x = 0;
-        addCyclogramToQueue(HalfForward);
-        addCyclogramToQueue(Rotate90Right);
-        addCyclogramToQueue(Rotate90Right);
-        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
+        addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+        addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
 
         Serial.println("Rotate 180 right");
 
@@ -369,7 +354,7 @@ void ORTHO_RR()
     else if (action == MOVE_LEFT)
     {
         x = 0;
-        addCyclogramToQueue(Rotate135Right);
+        addCyclogramToQueue(&ROTATE_135_RIGHT);
 
         Serial.println("rotate 135 right");
 
@@ -381,14 +366,14 @@ void ORTHO_LL()
 {
     if (_optimalTrajectory.size() == 0)
     {
-        addCyclogramToQueue(HalfForward);
-        addCyclogramToQueue(Rotate90Left);
-        addCyclogramToQueue(Rotate90Left);
-        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
+        addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+        addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
 
         Serial.println("rotate 180 Left");
 
-        addCyclogramToQueue(Forward);
+        addCyclogramToQueue(&FAST_FORWARD);
 
         Serial.println("Forward");
 
@@ -401,10 +386,10 @@ void ORTHO_LL()
     if (action == MOVE_FORWARD)
     {
         x = 0;
-        addCyclogramToQueue(HalfForward);
-        addCyclogramToQueue(Rotate90Left);
-        addCyclogramToQueue(Rotate90Left);
-        addCyclogramToQueue(HalfForward);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
+        addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+        addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+        addCyclogramToQueue(&FAST_HALF_FORWARD);
 
         Serial.println("rotate 180 Left");
 
@@ -413,7 +398,7 @@ void ORTHO_LL()
     else if (action == MOVE_RIGHT)
     {
         x = 0;
-        addCyclogramToQueue(Rotate135Left);
+        addCyclogramToQueue(&ROTATE_135_LEFT);
 
         Serial.println("rotate 135 left");
 
@@ -427,15 +412,15 @@ void DIAG_LR()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward45);
+            addCyclogramToQueue(&FORWARD_45_FAST);
             Serial.println("Forward 45");
         }
 
-        addCyclogramToQueue(Rotate45RightRevers);
+        addCyclogramToQueue(&ROTATE_45_RIGHT_REVERS);
 
         Serial.println("Rotate 45 right revers");
 
-        addCyclogramToQueue(Forward);
+        addCyclogramToQueue(&FAST_FORWARD);
 
         Serial.println("Forward");
 
@@ -449,11 +434,11 @@ void DIAG_LR()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward45);
+            addCyclogramToQueue(&FORWARD_45_FAST);
             Serial.println("Forward 45");
         }
 
-        addCyclogramToQueue(Rotate45RightRevers);
+        addCyclogramToQueue(&ROTATE_45_RIGHT_REVERS);
 
         Serial.println("Rotate 45 Right revers");
 
@@ -479,16 +464,16 @@ void DIAG_RL()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward45);
+            addCyclogramToQueue(&FORWARD_45_FAST);
 
             Serial.println("Forward 45");
         }
 
-        addCyclogramToQueue(Rotate45LeftRevers);
+        addCyclogramToQueue(&ROTATE_45_LEFT_REVERS);
 
         Serial.println("rotate 45 left revers");
 
-        addCyclogramToQueue(Forward);
+        addCyclogramToQueue(&FAST_FORWARD);
 
         Serial.println("Forward");
 
@@ -502,12 +487,12 @@ void DIAG_RL()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward45);
+            addCyclogramToQueue(&FORWARD_45_FAST);
 
             Serial.println("Forward 45");
         }
 
-        addCyclogramToQueue(Rotate45LeftRevers);
+        addCyclogramToQueue(&ROTATE_45_LEFT_REVERS);
 
         Serial.println("rotate 45 left revers");
 
@@ -533,15 +518,15 @@ void DIAG_RR()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward45);
+            addCyclogramToQueue(&FORWARD_45_FAST);
             Serial.println("Forward 45");
         }
 
-        addCyclogramToQueue(Rotate135RightRevers);
+        addCyclogramToQueue(&ROTATE_135_RIGHT_REVERS);
 
         Serial.println("rotate 135 right revers");
 
-        addCyclogramToQueue(Forward);
+        addCyclogramToQueue(&FAST_FORWARD);
 
         Serial.println("Forward");
 
@@ -555,12 +540,12 @@ void DIAG_RR()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward45);
+            addCyclogramToQueue(&FORWARD_45_FAST);
 
             Serial.println("forward 45");
         }
 
-        addCyclogramToQueue(Rotate135RightRevers);
+        addCyclogramToQueue(&ROTATE_135_RIGHT_REVERS);
 
         Serial.println("rotate 135 right revers");
 
@@ -572,12 +557,12 @@ void DIAG_RR()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward45);
+            addCyclogramToQueue(&FORWARD_45_FAST);
 
             Serial.println("Forward 45");
         }
 
-        addCyclogramToQueue(Diagonal90Right);
+        addCyclogramToQueue(&DIAGONAL_90_RIGHT);
 
         Serial.println("diagonal 90 right");
 
@@ -593,16 +578,16 @@ void DIAG_LL()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward45);
+            addCyclogramToQueue(&FORWARD_45_FAST);
 
             Serial.println("forward 45");
         }
 
-        addCyclogramToQueue(Rotate135LeftRevers);
+        addCyclogramToQueue(&ROTATE_135_LEFT_REVERS);
 
         Serial.println("rotate 135 left revers");
 
-        addCyclogramToQueue(Forward);
+        addCyclogramToQueue(&FAST_FORWARD);
 
         Serial.println("Forward");
 
@@ -616,12 +601,12 @@ void DIAG_LL()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward45);
+            addCyclogramToQueue(&FORWARD_45_FAST);
 
             Serial.println("Forward 45");
         }
 
-        addCyclogramToQueue(Diagonal90Left);
+        addCyclogramToQueue(&DIAGONAL_90_LEFT);
 
         Serial.println("dagonal 90 left");
 
@@ -633,12 +618,12 @@ void DIAG_LL()
     {
         for (int i = 0; i < x; i++)
         {
-            addCyclogramToQueue(Forward45);
+            addCyclogramToQueue(&FORWARD_45_FAST);
 
             Serial.println("Forward 45");
         }
 
-        addCyclogramToQueue(Rotate135LeftRevers);
+        addCyclogramToQueue(&ROTATE_135_LEFT_REVERS);
         Serial.println("Rotate 135 left revers");
 
         x = 0;
@@ -649,7 +634,7 @@ void DIAG_LL()
 
 void smartSolverTick()
 {
-    if (gCurrentRunState == FAST_RUN) 
+    if (gCurrentRunState == FAST_RUN)
     {
         if (isCyclogramsEmpty())
         {

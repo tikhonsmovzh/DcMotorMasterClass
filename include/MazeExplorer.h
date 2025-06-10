@@ -66,7 +66,7 @@ void resetState()
     _endPoint.x = CELL_END_X;
     _endPoint.y = CELL_END_Y;
 
-    addCyclogramToQueue(Start);
+    addCyclogramToQueue(&START);
 }
 
 void mazeExplorerInit()
@@ -171,7 +171,7 @@ void moveToForward()
 {
     fixCounter = 0;
 
-    addCyclogramToQueue(Forward);
+    addCyclogramToQueue(&FORWARD);
 
     switch (_currentRobotDirection)
     {
@@ -198,16 +198,16 @@ void moveToLeft()
     fixCounter++;
 
     if (fixCounter % 2 == 0)
-        addCyclogramToQueue(Rotate90LeftFix);
+        addCyclogramToQueue(&ROTATE_90_LEFT_FIX);
     else
-        addCyclogramToQueue(Rotate90Left);
+        addCyclogramToQueue(&ROTATE_90_LEFT);
 
     if (fixCounter % 4 == 0)
     {
         Maze::Cell currentCell = cellToLocal(gMaze.get(_currentRobotPos), _currentRobotDirection);
 
         if (currentCell.right == Maze::WALL)
-            addCyclogramToQueue(Start);
+            addCyclogramToQueue(&START);
     }
 
     switch (_currentRobotDirection)
@@ -239,16 +239,16 @@ void moveToRight()
     fixCounter++;
 
     if (fixCounter % 2 == 0)
-        addCyclogramToQueue(Rotate90RightFix);
+        addCyclogramToQueue(&ROTATE_90_RIGHT_FIX);
     else
-        addCyclogramToQueue(Rotate90Right);
+        addCyclogramToQueue(&ROTATE_90_RIGHT);
 
     if (fixCounter % 4 == 0)
     {
         Maze::Cell currentCell = cellToLocal(gMaze.get(_currentRobotPos), _currentRobotDirection);
 
-        if (currentCell.left == Maze::WALL)
-            addCyclogramToQueue(Start);
+        if (currentCell.right == Maze::WALL)
+            addCyclogramToQueue(&START);
     }
 
     switch (_currentRobotDirection)
@@ -279,7 +279,7 @@ void moveToRevers()
 {
     fixCounter = 0;
 
-    addCyclogramToQueue(Rotate180);
+    addCyclogramToQueue(&ROTATE_180);
 
     switch (_currentRobotDirection)
     {
@@ -368,15 +368,6 @@ void mazeExplorerTick()
         currentCell.right = Maze::EMPTY;
 
     gMaze.set(cellToGlobal(currentCell, _currentRobotDirection), _currentRobotPos);
-
-    // setLeftU(0.0f);
-    // setRightU(0.0f);
-
-    // drawMaze(&_maze, &_solver);
-
-    // Serial.print(_currentRobotPos.x);
-    // Serial.print(" ");
-    // Serial.println(_currentRobotPos.y);
 
     gSolver.findPath(_currentRobotPos, _endPoint, &gMaze);
 
