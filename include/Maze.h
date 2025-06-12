@@ -92,3 +92,5 @@ public:
             _maze[pos.x][pos.y].down = cell.down;
     }
 };
+
+Maze gMaze = Maze();

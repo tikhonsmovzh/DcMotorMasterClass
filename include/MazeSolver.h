@@ -55,6 +55,21 @@ public:
                     queue.pushBack(left);
                 }
             }
+            
+            if (cell.up != Maze::WALL)
+            {
+                Vec2Int up = Vec2Int(current.x, current.y - 1);
+
+                if (cellStates[up.x][up.y] == UKNNOWN)
+                {
+                    cellStates[up.x][up.y] = DOWN;
+
+                    if (up.x == start.x && up.y == start.y)
+                        return;
+
+                    queue.pushBack(up);
+                }
+            }
 
             if (cell.right != Maze::WALL)
             {
@@ -68,21 +83,6 @@ public:
                         return;
 
                     queue.pushBack(right);
-                }
-            }
-
-            if (cell.up != Maze::WALL)
-            {
-                Vec2Int up = Vec2Int(current.x, current.y - 1);
-
-                if (cellStates[up.x][up.y] == UKNNOWN)
-                {
-                    cellStates[up.x][up.y] = DOWN;
-
-                    if (up.x == start.x && up.y == start.y)
-                        return;
-
-                    queue.pushBack(up);
                 }
             }
 
@@ -108,3 +108,5 @@ public:
         return cellStates[pos.x][pos.y];
     }
 };
+
+MazeSolver gSolver = MazeSolver();

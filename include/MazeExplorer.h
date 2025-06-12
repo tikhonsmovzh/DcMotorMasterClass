@@ -10,17 +10,7 @@
 #include "DistanceSensor.h"
 #include "Odometry.h"
 #include "ElapsedTime.h"
-
-Maze gMaze = Maze();
-MazeSolver gSolver = MazeSolver();
-
-enum Direction
-{
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT
-};
+#include "CellMath.h"
 
 enum RunState
 {
@@ -30,38 +20,33 @@ enum RunState
     WAIT
 };
 
-Vec2Int _currentRobotPos(0, 0);
-Direction _currentRobotDirection = DOWN;
-
-int fixCounter = 0;
-ElapseTime _startTimer;
+Vec2Int gCurrentRobotPos(0, 0);
+Direction gCurrentRobotDirection = DOWN;
 
 RunState gCurrentRunState = WAIT;
 
 Vec2Int _endPoint(CELL_END_X, CELL_END_Y);
 
-bool _isExplorored = false;
-
 void resetState()
 {
-    if (gCurrentFunction == 8)
-    {
-        _currentRobotPos.x = 1;
-        _currentRobotPos.y = 0;
+    // if (gDistanceFrontRight > 250)
+    // {
+    gCurrentRobotPos.x = 1;
+    gCurrentRobotPos.y = 0;
 
-        _currentRobotDirection = RIGHT;
+    gCurrentRobotDirection = RIGHT;
 
-        gMaze.set(Maze::Cell(Maze::WALL, Maze::EMPTY, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
-    }
-    else
-    {
-        _currentRobotPos.x = 0;
-        _currentRobotPos.y = 1;
+    gMaze.set(Maze::Cell(Maze::WALL, Maze::EMPTY, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
+    // }
+    // else
+    // {
+    //     gCurrentRobotPos.x = 0;
+    //     gCurrentRobotPos.y = 1;
 
-        _currentRobotDirection = DOWN;
+    //     gCurrentRobotDirection = DOWN;
 
-        gMaze.set(Maze::Cell(Maze::EMPTY, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
-    }
+    //     gMaze.set(Maze::Cell(Maze::EMPTY, Maze::WALL, Maze::WALL, Maze::WALL), Vec2Int(0, 0));
+    // }
 
     _endPoint.x = CELL_END_X;
     _endPoint.y = CELL_END_Y;
@@ -69,309 +54,579 @@ void resetState()
     addCyclogramToQueue(&START);
 }
 
-void mazeExplorerInit()
+enum FastState
 {
-}
+    ORTHO_L,
+    ORTHO_R,
+    ORTHO_LL,
+    ORTHO_RR,
+    ORTHO,
+    DIAG_RL,
+    DIAG_LR,
+    DIAG_RR,
+    DIAG_LL
+};
 
-Maze::Cell cellToGlobal(Maze::Cell cell, Direction dir)
+void findFastPathAndRun()
 {
-    switch (dir)
+    static Vector<SimpleAction> optimalTrajectory;
+
+    optimalTrajectory.clear();
+
+    Vec2Int virtualCurrentPos;
+    Direction virtualCurrentDirection = gCurrentRobotDirection;
+
+    MazeSolver::CellState state;
+
+    gSolver.findPath(virtualCurrentPos, Vec2Int(CELL_END_X, CELL_END_Y), &gMaze);
+
+    do
     {
-    case UP:
-        return cell;
+        state = gSolver.getCellState(virtualCurrentPos);
 
-    case DOWN:
+        if (state == MazeSolver::END || state == MazeSolver::UKNNOWN)
+            break;
+
+        SimpleAction action = converCellStateToAction(state, virtualCurrentDirection);
+
+        optimalTrajectory.push_back(action);
+
+        if (action == MOVE_FORWARD)
+            calcForwardPos(&virtualCurrentDirection, &virtualCurrentPos);
+        else if (action == MOVE_LEFT)
+            calcLeftPos(&virtualCurrentDirection, &virtualCurrentPos);
+        else if (action == MOVE_RIGHT)
+            calcRightPos(&virtualCurrentDirection, &virtualCurrentPos);
+        else
+            calcReversPos(&virtualCurrentDirection, &virtualCurrentPos);
+    } while (state != MazeSolver::END && state != MazeSolver::UKNNOWN);
+
+    optimalTrajectory.push_back(STOP);
+
+    int x = 0;
+
+    addCyclogramToQueue(&START_CENTER);
+
+    FastState currentFastState = ORTHO;
+
+    optimalTrajectory.remove(0);
+
+    while (optimalTrajectory.size() > 0)
     {
-        Maze::Cell resultCell;
+        SimpleAction action = optimalTrajectory[0];
+        optimalTrajectory.remove(0);
 
-        resultCell.up = cell.down;
-        resultCell.down = cell.up;
-        resultCell.left = cell.right;
-        resultCell.right = cell.left;
+        // Serial.println("");
 
-        return resultCell;
+        // if (action == MOVE_FORWARD)
+        //     Serial.println("forward");
+        // else if (action == MOVE_LEFT)
+        //     Serial.println("left");
+        // else if (action == MOVE_RIGHT)
+        //     Serial.println("right");
+
+        // Serial.println();
+
+        switch (currentFastState)
+        {
+        case ORTHO:
+        {
+            if (action == MOVE_FORWARD)
+                x++;
+            else if (action == MOVE_RIGHT)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FAST_FORWARD);
+
+                    Serial.println("Forward");
+                }
+
+                currentFastState = ORTHO_R;
+            }
+            else if (action == MOVE_LEFT)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FAST_FORWARD);
+
+                    Serial.println("Forward");
+                }
+
+                currentFastState = ORTHO_L;
+            }
+            else if (action == STOP)
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FAST_FORWARD);
+
+                    Serial.println("Forward");
+                }
+
+            break;
+        }
+
+        case ORTHO_R:
+        {
+            if (action == MOVE_FORWARD)
+            {
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+
+                Serial.println("Rotate 90 Right");
+
+                x = 0;
+
+                currentFastState = ORTHO;
+            }
+            else if (action == MOVE_RIGHT)
+                currentFastState = ORTHO_RR;
+            else if (action == MOVE_LEFT)
+            {
+                addCyclogramToQueue(&ROTATE_45_RIGHT);
+
+                Serial.println("rotate 45 Right");
+
+                x = 0;
+
+                currentFastState = DIAG_RL;
+            }
+            else if (action == STOP)
+            {
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+
+                Serial.println("Rotate 90 Right");
+
+                addCyclogramToQueue(&FAST_FORWARD);
+
+                Serial.println("Forward");
+            }
+
+            break;
+        }
+
+        case ORTHO_L:
+        {
+            if (action == MOVE_FORWARD)
+            {
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+
+                Serial.println("Rotate 90 Left");
+
+                x = 0;
+
+                currentFastState = ORTHO;
+            }
+            else if (action == MOVE_LEFT)
+                currentFastState = ORTHO_LL;
+            else if (action == MOVE_RIGHT)
+            {
+                addCyclogramToQueue(&ROTATE_45_LEFT);
+
+                Serial.println("Rotate 45 left");
+                x = 0;
+
+                currentFastState = DIAG_LR;
+            }
+            else if (action == STOP)
+            {
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+
+                Serial.println("Rotate 90 Left");
+
+                addCyclogramToQueue(&FAST_FORWARD);
+                Serial.println("forward");
+            }
+
+            break;
+        }
+
+        case ORTHO_RR:
+        {
+            if (action == MOVE_FORWARD)
+            {
+                x = 0;
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+
+                Serial.println("Rotate 180 right");
+
+                currentFastState = ORTHO;
+            }
+            else if (action == MOVE_LEFT)
+            {
+                x = 0;
+                addCyclogramToQueue(&ROTATE_135_RIGHT);
+
+                Serial.println("rotate 135 right");
+
+                currentFastState = DIAG_RL;
+            }
+            else if (action == STOP)
+            {
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+
+                Serial.println("Rotate 180 right");
+
+                addCyclogramToQueue(&FAST_FORWARD);
+
+                Serial.println("Forward");
+            }
+
+            break;
+        }
+
+        case ORTHO_LL:
+        {
+            if (action == MOVE_FORWARD)
+            {
+                x = 0;
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+
+                Serial.println("rotate 180 Left");
+
+                currentFastState = ORTHO;
+            }
+            else if (action == MOVE_RIGHT)
+            {
+                x = 0;
+                addCyclogramToQueue(&ROTATE_135_LEFT);
+
+                Serial.println("rotate 135 left");
+
+                currentFastState = DIAG_LR;
+            }
+            else if (action == STOP)
+            {
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+                addCyclogramToQueue(&FAST_HALF_FORWARD);
+
+                Serial.println("rotate 180 Left");
+
+                addCyclogramToQueue(&FAST_FORWARD);
+
+                Serial.println("Forward");
+            }
+
+            break;
+        }
+
+        case DIAG_LR:
+        {
+            if (action == MOVE_FORWARD)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FORWARD_45_FAST);
+                    Serial.println("Forward 45");
+                }
+
+                addCyclogramToQueue(&ROTATE_45_RIGHT_REVERS);
+
+                Serial.println("Rotate 45 Right revers");
+
+                x = 0;
+
+                currentFastState = ORTHO;
+            }
+            else if (action == MOVE_RIGHT)
+            {
+                currentFastState = DIAG_RR;
+            }
+            else if (action == MOVE_LEFT)
+            {
+                x++;
+
+                currentFastState = DIAG_RL;
+            }
+            else if (action == STOP)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FORWARD_45_FAST);
+                    Serial.println("Forward 45");
+                }
+
+                addCyclogramToQueue(&ROTATE_45_RIGHT_REVERS);
+
+                Serial.println("Rotate 45 right revers");
+
+                addCyclogramToQueue(&FAST_FORWARD);
+
+                Serial.println("Forward");
+            }
+
+            break;
+        }
+
+        case DIAG_RL:
+        {
+            if (action == MOVE_FORWARD)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FORWARD_45_FAST);
+
+                    Serial.println("Forward 45");
+                }
+
+                addCyclogramToQueue(&ROTATE_45_LEFT_REVERS);
+
+                Serial.println("rotate 45 left revers");
+
+                x = 0;
+
+                currentFastState = ORTHO;
+            }
+            else if (action == MOVE_LEFT)
+            {
+                currentFastState = DIAG_LL;
+            }
+            else if (action == MOVE_RIGHT)
+            {
+                x++;
+
+                currentFastState = DIAG_LR;
+            }
+            else if (action == STOP)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FORWARD_45_FAST);
+
+                    Serial.println("Forward 45");
+                }
+
+                addCyclogramToQueue(&ROTATE_45_LEFT_REVERS);
+
+                Serial.println("rotate 45 left revers");
+
+                addCyclogramToQueue(&FAST_FORWARD);
+
+                Serial.println("Forward");
+            }
+
+            break;
+        }
+
+        case DIAG_RR:
+        {
+            if (action == MOVE_FORWARD)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FORWARD_45_FAST);
+
+                    Serial.println("forward 45");
+                }
+
+                addCyclogramToQueue(&ROTATE_135_RIGHT_REVERS);
+
+                Serial.println("rotate 135 right revers");
+
+                x = 0;
+
+                currentFastState = ORTHO;
+            }
+            else if (action == MOVE_LEFT)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FORWARD_45_FAST);
+
+                    Serial.println("Forward 45");
+                }
+
+                addCyclogramToQueue(&DIAGONAL_90_RIGHT);
+
+                Serial.println("diagonal 90 right");
+
+                x = 0;
+
+                currentFastState = DIAG_RL;
+            }
+            else if (action == STOP)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FORWARD_45_FAST);
+                    Serial.println("Forward 45");
+                }
+
+                addCyclogramToQueue(&ROTATE_135_RIGHT_REVERS);
+
+                Serial.println("rotate 135 right revers");
+
+                addCyclogramToQueue(&FAST_FORWARD);
+
+                Serial.println("Forward");
+            }
+
+            break;
+        }
+
+        case DIAG_LL:
+        {
+            if (action == MOVE_RIGHT)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FORWARD_45_FAST);
+
+                    Serial.println("Forward 45");
+                }
+
+                addCyclogramToQueue(&DIAGONAL_90_LEFT);
+
+                Serial.println("dagonal 90 left");
+
+                x = 0;
+
+                currentFastState = DIAG_LR;
+            }
+            else if (action == MOVE_FORWARD)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FORWARD_45_FAST);
+
+                    Serial.println("Forward 45");
+                }
+
+                addCyclogramToQueue(&ROTATE_135_LEFT_REVERS);
+                Serial.println("Rotate 135 left revers");
+
+                x = 0;
+
+                currentFastState = ORTHO;
+            }
+            else if (action == STOP)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    addCyclogramToQueue(&FORWARD_45_FAST);
+
+                    Serial.println("forward 45");
+                }
+
+                addCyclogramToQueue(&ROTATE_135_LEFT_REVERS);
+
+                Serial.println("rotate 135 left revers");
+
+                addCyclogramToQueue(&FAST_FORWARD);
+
+                Serial.println("Forward");
+            }
+
+            break;
+        }
+        }
     }
 
-    case LEFT:
-    {
-        Maze::Cell resultCell;
+    addCyclogramToQueue(&FAST_FORWARD);
 
-        resultCell.up = cell.right;
-        resultCell.down = cell.left;
-        resultCell.left = cell.up;
-        resultCell.right = cell.down;
-
-        return resultCell;
-    }
-
-    case RIGHT:
-    {
-        Maze::Cell resultCell;
-
-        resultCell.up = cell.left;
-        resultCell.down = cell.right;
-        resultCell.left = cell.down;
-        resultCell.right = cell.up;
-
-        return resultCell;
-    }
-    }
-
-    return cell;
+    Serial.println("Forward");
 }
-
-Maze::Cell cellToLocal(Maze::Cell cell, Direction dir)
-{
-    switch (dir)
-    {
-    case UP:
-        return cell;
-
-    case DOWN:
-    {
-        Maze::Cell resultCell;
-
-        resultCell.up = cell.down;
-        resultCell.down = cell.up;
-        resultCell.left = cell.right;
-        resultCell.right = cell.left;
-
-        return resultCell;
-    }
-
-    case LEFT:
-    {
-        Maze::Cell resultCell;
-
-        resultCell.up = cell.left;
-        resultCell.down = cell.right;
-        resultCell.left = cell.down;
-        resultCell.right = cell.up;
-
-        return resultCell;
-    }
-
-    case RIGHT:
-    {
-        Maze::Cell resultCell;
-
-        resultCell.up = cell.right;
-        resultCell.down = cell.left;
-        resultCell.left = cell.up;
-        resultCell.right = cell.down;
-
-        return resultCell;
-    }
-    }
-
-    return cell;
-}
-
-void moveToForward()
-{
-    fixCounter = 0;
-
-    addCyclogramToQueue(&FORWARD);
-
-    switch (_currentRobotDirection)
-    {
-    case UP:
-        _currentRobotPos.y--;
-        break;
-
-    case DOWN:
-        _currentRobotPos.y++;
-        break;
-
-    case LEFT:
-        _currentRobotPos.x--;
-        break;
-
-    case RIGHT:
-        _currentRobotPos.x++;
-        break;
-    }
-}
-
-void moveToLeft()
-{
-    fixCounter++;
-
-    if (fixCounter % 2 == 0)
-        addCyclogramToQueue(&ROTATE_90_LEFT_FIX);
-    else
-        addCyclogramToQueue(&ROTATE_90_LEFT);
-
-    if (fixCounter % 4 == 0)
-    {
-        Maze::Cell currentCell = cellToLocal(gMaze.get(_currentRobotPos), _currentRobotDirection);
-
-        if (currentCell.right == Maze::WALL)
-            addCyclogramToQueue(&START);
-    }
-
-    switch (_currentRobotDirection)
-    {
-    case UP:
-        _currentRobotPos.x--;
-        _currentRobotDirection = LEFT;
-        break;
-
-    case DOWN:
-        _currentRobotPos.x++;
-        _currentRobotDirection = RIGHT;
-        break;
-
-    case LEFT:
-        _currentRobotPos.y++;
-        _currentRobotDirection = DOWN;
-        break;
-
-    case RIGHT:
-        _currentRobotPos.y--;
-        _currentRobotDirection = UP;
-        break;
-    }
-}
-
-void moveToRight()
-{
-    fixCounter++;
-
-    if (fixCounter % 2 == 0)
-        addCyclogramToQueue(&ROTATE_90_RIGHT_FIX);
-    else
-        addCyclogramToQueue(&ROTATE_90_RIGHT);
-
-    if (fixCounter % 4 == 0)
-    {
-        Maze::Cell currentCell = cellToLocal(gMaze.get(_currentRobotPos), _currentRobotDirection);
-
-        if (currentCell.right == Maze::WALL)
-            addCyclogramToQueue(&START);
-    }
-
-    switch (_currentRobotDirection)
-    {
-    case UP:
-        _currentRobotPos.x++;
-        _currentRobotDirection = RIGHT;
-        break;
-
-    case DOWN:
-        _currentRobotPos.x--;
-        _currentRobotDirection = LEFT;
-        break;
-
-    case LEFT:
-        _currentRobotPos.y--;
-        _currentRobotDirection = UP;
-        break;
-
-    case RIGHT:
-        _currentRobotPos.y++;
-        _currentRobotDirection = DOWN;
-        break;
-    }
-}
-
-void moveToRevers()
-{
-    fixCounter = 0;
-
-    addCyclogramToQueue(&ROTATE_180);
-
-    switch (_currentRobotDirection)
-    {
-    case UP:
-        _currentRobotPos.y++;
-        _currentRobotDirection = DOWN;
-        break;
-
-    case DOWN:
-        _currentRobotPos.y--;
-        _currentRobotDirection = UP;
-        break;
-
-    case LEFT:
-        _currentRobotPos.x++;
-        _currentRobotDirection = RIGHT;
-        break;
-
-    case RIGHT:
-        _currentRobotPos.x--;
-        _currentRobotDirection = LEFT;
-        break;
-    }
-}
-
-void findFastPath();
 
 void mazeExplorerTick()
 {
-    if (gCurrentRunState == FAST_RUN)
-        return;
+    // if (gCurrentRunState == FAST_RUN)
+    // {
+    //     if (isCyclogramsEmpty())
+    //         gCurrentRunState = WAIT;
+
+    //     return;
+    // }
+
+    static bool isExplorored = false;
 
     if (gCurrentRunState == WAIT)
     {
-        static bool isStartButtonPresed = false;
+        static bool oldIsStart = false;
 
-        if (gDistanceFrontLeft > 250)
+        bool isStart = gDistanceFrontLeft > 260;
+
+        if (!oldIsStart && isStart)
         {
-            _startTimer.reset();
+            static int optoparStartCounter = 0;
 
-            isStartButtonPresed = true;
+            optoparStartCounter++;
 
-            return;
-        }
-        else if (isStartButtonPresed && _startTimer.milliseconds() > START_TIMER)
-        {
-            isStartButtonPresed = false;
-
-            if (_isExplorored)
+            if (optoparStartCounter >= 2)
             {
-                gCurrentRunState = FAST_RUN;
+                optoparStartCounter = 0;
 
-                findFastPath();
+                static int startsCounter = 0;
 
-                return;
-            }
-            else
-            {
-                gCurrentRunState = SERCH_FINISH;
+                if (isExplorored && startsCounter >= 2)
+                {
+                    gCurrentRunState = FAST_RUN;
 
-                resetState();
+                    resetState();
+                }
+                else
+                {
+                    gCurrentRunState = SERCH_FINISH;
+
+                    resetState();
+                }
+
+                startsCounter++;
             }
         }
-        else
-            return;
+
+        oldIsStart = isStart;
+
+        return;
     }
 
     if (!isCyclogramsEmpty())
         return;
 
-    Maze::Cell currentCell = cellToLocal(gMaze.get(_currentRobotPos), _currentRobotDirection);
+    if (gCurrentRunState != FAST_RUN)
+    {
+        Maze::Cell currentCell = cellToLocal(gMaze.get(gCurrentRobotPos), gCurrentRobotDirection);
 
-    if (isWallForward())
-        currentCell.up = Maze::WALL;
-    else
-        currentCell.up = Maze::EMPTY;
+        if (isWallForward())
+            currentCell.up = Maze::WALL;
+        else
+            currentCell.up = Maze::EMPTY;
 
-    if (isWallLeft())
-        currentCell.left = Maze::WALL;
-    else
-        currentCell.left = Maze::EMPTY;
+        if (isWallLeft())
+            currentCell.left = Maze::WALL;
+        else
+            currentCell.left = Maze::EMPTY;
 
-    if (isWallRight())
-        currentCell.right = Maze::WALL;
-    else
-        currentCell.right = Maze::EMPTY;
+        if (isWallRight())
+            currentCell.right = Maze::WALL;
+        else
+            currentCell.right = Maze::EMPTY;
 
-    gMaze.set(cellToGlobal(currentCell, _currentRobotDirection), _currentRobotPos);
+        gMaze.set(cellToGlobal(currentCell, gCurrentRobotDirection), gCurrentRobotPos);
+    }
 
-    gSolver.findPath(_currentRobotPos, _endPoint, &gMaze);
+    gSolver.findPath(gCurrentRobotPos, _endPoint, &gMaze);
 
-    MazeSolver::CellState state = gSolver.getCellState(_currentRobotPos);
+    MazeSolver::CellState state = gSolver.getCellState(gCurrentRobotPos);
+
+    Serial.println(state);
 
     if (state == MazeSolver::END || state == MazeSolver::UKNNOWN)
     {
@@ -379,9 +634,10 @@ void mazeExplorerTick()
         {
             _endPoint.x = 0;
             _endPoint.y = 0;
+
             gCurrentRunState = SERCH_END;
 
-            _isExplorored = true;
+            isExplorored = true;
         }
         else if (gCurrentRunState == SERCH_END)
             gCurrentRunState = WAIT;
@@ -389,54 +645,79 @@ void mazeExplorerTick()
         return;
     }
 
-    switch (_currentRobotDirection)
+    SimpleAction action = converCellStateToAction(state, gCurrentRobotDirection);
+
+    static int fixCounter = 0;
+
+    Serial.println(action);
+
+    if (action == MOVE_REVERS)
     {
-    case UP:
-        if (state == MazeSolver::UP)
-            moveToForward();
-        else if (state == MazeSolver::LEFT)
-            moveToLeft();
-        else if (state == MazeSolver::RIGHT)
-            moveToRight();
+        calcReversPos(&gCurrentRobotDirection, &gCurrentRobotPos);
+
+        fixCounter = 0;
+
+        addCyclogramToQueue(&ROTATE_180);
+    }
+    else if (action == MOVE_RIGHT)
+    {
+        calcRightPos(&gCurrentRobotDirection, &gCurrentRobotPos);
+
+        fixCounter++;
+
+        if (fixCounter % 2 == 0)
+        {
+            if (gCurrentRunState == FAST_RUN)
+                addCyclogramToQueue(&ROTATE_90_RIGHT_FIX_FAST);
+            else
+                addCyclogramToQueue(&ROTATE_90_RIGHT_FIX);
+        }
         else
-            moveToRevers();
+        {
+            if (gCurrentRunState == FAST_RUN)
+                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
+            else
+                addCyclogramToQueue(&ROTATE_90_RIGHT);
+        }
+    }
+    else if (action == MOVE_LEFT)
+    {
+        calcLeftPos(&gCurrentRobotDirection, &gCurrentRobotPos);
 
-        break;
+        fixCounter++;
 
-    case LEFT:
-        if (state == MazeSolver::UP)
-            moveToRight();
-        else if (state == MazeSolver::LEFT)
-            moveToForward();
-        else if (state == MazeSolver::DOWN)
-            moveToLeft();
+        if (fixCounter % 2 == 0)
+        {
+            if (gCurrentRunState == FAST_RUN)
+                addCyclogramToQueue(&ROTATE_90_LEFT_FIX_FAST);
+            else
+                addCyclogramToQueue(&ROTATE_90_LEFT_FIX);
+        }
         else
-            moveToRevers();
+        {
+            if (gCurrentRunState == FAST_RUN)
+                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
+            else
+                addCyclogramToQueue(&ROTATE_90_LEFT);
+        }
+    }
+    else
+    {
+        calcForwardPos(&gCurrentRobotDirection, &gCurrentRobotPos);
 
-        break;
+        fixCounter = 0;
 
-    case RIGHT:
-        if (state == MazeSolver::UP)
-            moveToLeft();
-        else if (state == MazeSolver::RIGHT)
-            moveToForward();
-        else if (state == MazeSolver::DOWN)
-            moveToRight();
+        if (gCurrentRunState == FAST_RUN)
+            addCyclogramToQueue(&FAST_FORWARD);
         else
-            moveToRevers();
+            addCyclogramToQueue(&FORWARD);
+    }
 
-        break;
+    if (fixCounter % 4 == 0 && (action == MOVE_LEFT || action == MOVE_RIGHT))
+    {
+        Maze::Cell currentCell = cellToLocal(gMaze.get(gCurrentRobotPos), gCurrentRobotDirection);
 
-    case DOWN:
-        if (state == MazeSolver::LEFT)
-            moveToRight();
-        else if (state == MazeSolver::DOWN)
-            moveToForward();
-        else if (state == MazeSolver::RIGHT)
-            moveToLeft();
-        else
-            moveToRevers();
-
-        break;
+        if (currentCell.right == Maze::WALL)
+            addCyclogramToQueue(&START);
     }
 }
