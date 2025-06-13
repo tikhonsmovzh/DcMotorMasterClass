@@ -54,19 +54,6 @@ void resetState()
     addCyclogramToQueue(&START);
 }
 
-enum FastState
-{
-    ORTHO_L,
-    ORTHO_R,
-    ORTHO_LL,
-    ORTHO_RR,
-    ORTHO,
-    DIAG_RL,
-    DIAG_LR,
-    DIAG_RR,
-    DIAG_LL
-};
-
 void findFastPathAndRun()
 {
     static Vector<SimpleAction> optimalTrajectory;
@@ -103,446 +90,24 @@ void findFastPathAndRun()
 
     optimalTrajectory.push_back(STOP);
 
-    int x = 0;
-
     addCyclogramToQueue(&START_CENTER);
-
-    FastState currentFastState = ORTHO;
-
-    optimalTrajectory.remove(0);
 
     while (optimalTrajectory.size() > 0)
     {
-        SimpleAction action = optimalTrajectory[0];
-        optimalTrajectory.remove(0);
-
-        // Serial.println("");
-
-        // if (action == MOVE_FORWARD)
-        //     Serial.println("forward");
-        // else if (action == MOVE_LEFT)
-        //     Serial.println("left");
-        // else if (action == MOVE_RIGHT)
-        //     Serial.println("right");
-
-        // Serial.println();
-
-        switch (currentFastState)
+        if (optimalTrajectory.size() >= 4 && optimalTrajectory[0] == MOVE_FORWARD && optimalTrajectory[1] == MOVE_RIGHT && optimalTrajectory[2] == MOVE_LEFT && optimalTrajectory[3] == MOVE_FORWARD)
         {
-        case ORTHO:
-        {
-            if (action == MOVE_FORWARD)
-                x++;
-            else if (action == MOVE_RIGHT)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FAST_FORWARD);
-
-                    Serial.println("Forward");
-                }
-
-                currentFastState = ORTHO_R;
-            }
-            else if (action == MOVE_LEFT)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FAST_FORWARD);
-
-                    Serial.println("Forward");
-                }
-
-                currentFastState = ORTHO_L;
-            }
-            else if (action == STOP)
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FAST_FORWARD);
-
-                    Serial.println("Forward");
-                }
-
-            break;
+            addCyclogramToQueue(&HALF_FORWARD);
+            addCyclogramToQueue(&ROTATE_45_RIGHT);
+            addCyclogramToQueue(&ROTATE_45_LEFT_REVERS);
+            addCyclogramToQueue(&HALF_FORWARD);
         }
-
-        case ORTHO_R:
-        {
-            if (action == MOVE_FORWARD)
-            {
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-
-                Serial.println("Rotate 90 Right");
-
-                x = 0;
-
-                currentFastState = ORTHO;
-            }
-            else if (action == MOVE_RIGHT)
-                currentFastState = ORTHO_RR;
-            else if (action == MOVE_LEFT)
-            {
-                addCyclogramToQueue(&ROTATE_45_RIGHT);
-
-                Serial.println("rotate 45 Right");
-
-                x = 0;
-
-                currentFastState = DIAG_RL;
-            }
-            else if (action == STOP)
-            {
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-
-                Serial.println("Rotate 90 Right");
-
-                addCyclogramToQueue(&FAST_FORWARD);
-
-                Serial.println("Forward");
-            }
-
-            break;
-        }
-
-        case ORTHO_L:
-        {
-            if (action == MOVE_FORWARD)
-            {
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-
-                Serial.println("Rotate 90 Left");
-
-                x = 0;
-
-                currentFastState = ORTHO;
-            }
-            else if (action == MOVE_LEFT)
-                currentFastState = ORTHO_LL;
-            else if (action == MOVE_RIGHT)
-            {
-                addCyclogramToQueue(&ROTATE_45_LEFT);
-
-                Serial.println("Rotate 45 left");
-                x = 0;
-
-                currentFastState = DIAG_LR;
-            }
-            else if (action == STOP)
-            {
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-
-                Serial.println("Rotate 90 Left");
-
-                addCyclogramToQueue(&FAST_FORWARD);
-                Serial.println("forward");
-            }
-
-            break;
-        }
-
-        case ORTHO_RR:
-        {
-            if (action == MOVE_FORWARD)
-            {
-                x = 0;
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
-                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-
-                Serial.println("Rotate 180 right");
-
-                currentFastState = ORTHO;
-            }
-            else if (action == MOVE_LEFT)
-            {
-                x = 0;
-                addCyclogramToQueue(&ROTATE_135_RIGHT);
-
-                Serial.println("rotate 135 right");
-
-                currentFastState = DIAG_RL;
-            }
-            else if (action == STOP)
-            {
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
-                addCyclogramToQueue(&ROTATE_90_RIGHT_FAST);
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-
-                Serial.println("Rotate 180 right");
-
-                addCyclogramToQueue(&FAST_FORWARD);
-
-                Serial.println("Forward");
-            }
-
-            break;
-        }
-
-        case ORTHO_LL:
-        {
-            if (action == MOVE_FORWARD)
-            {
-                x = 0;
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
-                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-
-                Serial.println("rotate 180 Left");
-
-                currentFastState = ORTHO;
-            }
-            else if (action == MOVE_RIGHT)
-            {
-                x = 0;
-                addCyclogramToQueue(&ROTATE_135_LEFT);
-
-                Serial.println("rotate 135 left");
-
-                currentFastState = DIAG_LR;
-            }
-            else if (action == STOP)
-            {
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
-                addCyclogramToQueue(&ROTATE_90_LEFT_FAST);
-                addCyclogramToQueue(&FAST_HALF_FORWARD);
-
-                Serial.println("rotate 180 Left");
-
-                addCyclogramToQueue(&FAST_FORWARD);
-
-                Serial.println("Forward");
-            }
-
-            break;
-        }
-
-        case DIAG_LR:
-        {
-            if (action == MOVE_FORWARD)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FORWARD_45_FAST);
-                    Serial.println("Forward 45");
-                }
-
-                addCyclogramToQueue(&ROTATE_45_RIGHT_REVERS);
-
-                Serial.println("Rotate 45 Right revers");
-
-                x = 0;
-
-                currentFastState = ORTHO;
-            }
-            else if (action == MOVE_RIGHT)
-            {
-                currentFastState = DIAG_RR;
-            }
-            else if (action == MOVE_LEFT)
-            {
-                x++;
-
-                currentFastState = DIAG_RL;
-            }
-            else if (action == STOP)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FORWARD_45_FAST);
-                    Serial.println("Forward 45");
-                }
-
-                addCyclogramToQueue(&ROTATE_45_RIGHT_REVERS);
-
-                Serial.println("Rotate 45 right revers");
-
-                addCyclogramToQueue(&FAST_FORWARD);
-
-                Serial.println("Forward");
-            }
-
-            break;
-        }
-
-        case DIAG_RL:
-        {
-            if (action == MOVE_FORWARD)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FORWARD_45_FAST);
-
-                    Serial.println("Forward 45");
-                }
-
-                addCyclogramToQueue(&ROTATE_45_LEFT_REVERS);
-
-                Serial.println("rotate 45 left revers");
-
-                x = 0;
-
-                currentFastState = ORTHO;
-            }
-            else if (action == MOVE_LEFT)
-            {
-                currentFastState = DIAG_LL;
-            }
-            else if (action == MOVE_RIGHT)
-            {
-                x++;
-
-                currentFastState = DIAG_LR;
-            }
-            else if (action == STOP)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FORWARD_45_FAST);
-
-                    Serial.println("Forward 45");
-                }
-
-                addCyclogramToQueue(&ROTATE_45_LEFT_REVERS);
-
-                Serial.println("rotate 45 left revers");
-
-                addCyclogramToQueue(&FAST_FORWARD);
-
-                Serial.println("Forward");
-            }
-
-            break;
-        }
-
-        case DIAG_RR:
-        {
-            if (action == MOVE_FORWARD)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FORWARD_45_FAST);
-
-                    Serial.println("forward 45");
-                }
-
-                addCyclogramToQueue(&ROTATE_135_RIGHT_REVERS);
-
-                Serial.println("rotate 135 right revers");
-
-                x = 0;
-
-                currentFastState = ORTHO;
-            }
-            else if (action == MOVE_LEFT)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FORWARD_45_FAST);
-
-                    Serial.println("Forward 45");
-                }
-
-                addCyclogramToQueue(&DIAGONAL_90_RIGHT);
-
-                Serial.println("diagonal 90 right");
-
-                x = 0;
-
-                currentFastState = DIAG_RL;
-            }
-            else if (action == STOP)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FORWARD_45_FAST);
-                    Serial.println("Forward 45");
-                }
-
-                addCyclogramToQueue(&ROTATE_135_RIGHT_REVERS);
-
-                Serial.println("rotate 135 right revers");
-
-                addCyclogramToQueue(&FAST_FORWARD);
-
-                Serial.println("Forward");
-            }
-
-            break;
-        }
-
-        case DIAG_LL:
-        {
-            if (action == MOVE_RIGHT)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FORWARD_45_FAST);
-
-                    Serial.println("Forward 45");
-                }
-
-                addCyclogramToQueue(&DIAGONAL_90_LEFT);
-
-                Serial.println("dagonal 90 left");
-
-                x = 0;
-
-                currentFastState = DIAG_LR;
-            }
-            else if (action == MOVE_FORWARD)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FORWARD_45_FAST);
-
-                    Serial.println("Forward 45");
-                }
-
-                addCyclogramToQueue(&ROTATE_135_LEFT_REVERS);
-                Serial.println("Rotate 135 left revers");
-
-                x = 0;
-
-                currentFastState = ORTHO;
-            }
-            else if (action == STOP)
-            {
-                for (int i = 0; i < x; i++)
-                {
-                    addCyclogramToQueue(&FORWARD_45_FAST);
-
-                    Serial.println("forward 45");
-                }
-
-                addCyclogramToQueue(&ROTATE_135_LEFT_REVERS);
-
-                Serial.println("rotate 135 left revers");
-
-                addCyclogramToQueue(&FAST_FORWARD);
-
-                Serial.println("Forward");
-            }
-
-            break;
-        }
-        }
+        else if (optimalTrajectory[0] == MOVE_FORWARD)
+            addCyclogramToQueue(&FORWARD);
+        else if (optimalTrajectory[1] == MOVE_LEFT)
+            addCyclogramToQueue(&ROTATE_90_LEFT);
+        else
+            addCyclogramToQueue(&ROTATE_90_RIGHT);
     }
-
-    addCyclogramToQueue(&FAST_FORWARD);
-
-    Serial.println("Forward");
 }
 
 void mazeExplorerTick()
@@ -632,10 +197,15 @@ void mazeExplorerTick()
     {
         if (gCurrentRunState == SERCH_FINISH || gCurrentRunState == FAST_RUN)
         {
-            _endPoint.x = 0;
-            _endPoint.y = 0;
+            if (gCurrentFunction != 8)
+            {
+                _endPoint.x = 0;
+                _endPoint.y = 0;
 
-            gCurrentRunState = SERCH_END;
+                gCurrentRunState = SERCH_END;
+            }
+            else
+                gCurrentRunState = WAIT;
 
             isExplorored = true;
         }
@@ -653,11 +223,16 @@ void mazeExplorerTick()
 
     if (action == MOVE_REVERS)
     {
+        Maze::Cell currentCell = cellToLocal(gMaze.get(gCurrentRobotPos), gCurrentRobotDirection);
+
         calcReversPos(&gCurrentRobotDirection, &gCurrentRobotPos);
 
         fixCounter = 0;
 
-        addCyclogramToQueue(&ROTATE_180);
+        if (currentCell.up == Maze::WALL)
+            addCyclogramToQueue(&ROTATE_180);
+        else
+            addCyclogramToQueue(&ROTATE_180_ON_PLACE);
     }
     else if (action == MOVE_RIGHT)
     {

@@ -374,6 +374,26 @@ public:
 Diagnal90 DIAGONAL_90_LEFT(true);
 Diagnal90 DIAGONAL_90_RIGHT(false);
 
+class Rotate180Place : public ICyclogram
+{
+public:
+    void run(Sensor *sensor, MotorState *motorState) override
+    {
+        float rotTime = PI / ROTATE_VEL * ROTATE180_COLLIBREATE_K;
+
+        if (sensor->time < rotTime)
+        {
+            motorState->headingVelocity = ROTATE_VEL;
+            motorState->forwardVel = 0.0f;
+            motorState->isComplited = false;
+        }
+        else
+            motorState->isComplited = true;
+    }
+};
+
+Rotate180Place ROTATE_180_ON_PLACE;
+
 Vector<ICyclogram *> _cyclograms;
 float _lastCyclogramTime = 0.0;
 
